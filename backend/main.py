@@ -1,7 +1,24 @@
+import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.api.v1 import api_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create uploads directory on startup
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    # Initialize DB tables
+    from app.core.database import init_db
+    try:
+        await init_db()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"Database initialization deferred: {e}")
+    yield
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -9,7 +26,8 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan,
 )
 
 # Secure CORS Middleware
@@ -23,6 +41,12 @@ app.add_middleware(
 
 # Include API v1 router
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Mount uploads directory for static file serving
+import pathlib
+_upload_path = pathlib.Path(settings.UPLOAD_DIR)
+_upload_path.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(_upload_path)), name="uploads")
 
 
 @app.get("/", summary="Root Endpoint")

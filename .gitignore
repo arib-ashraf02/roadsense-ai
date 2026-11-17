@@ -54,3 +54,11 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 *.log
+
+# Database & Uploads
+*.db
+*.sqlite3
+uploads/
+backend/uploads/*
+!backend/uploads/.gitkeep
+

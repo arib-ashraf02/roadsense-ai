@@ -1,0 +1,247 @@
+// Prisma Schema for RoadSense AI
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  OFFICER
+  CITIZEN
+  MAINTENANCE
+}
+
+enum ComplaintStatus {
+  SUBMITTED
+  TRIAGED
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TicketStatus {
+  OPEN
+  ASSIGNED
+  IN_REPAIR
+  AWAITING_VERIFICATION
+  CLOSED
+  REJECTED
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum UploadStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum AIVerdict {
+  PASSED
+  FAILED
+  MANUAL_REVIEW_REQUIRED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  phone        String?
+  role         UserRole @default(CITIZEN)
+  wardId       String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  complaints          Complaint[]          @relation("CitizenComplaints")
+  uploads             Upload[]
+  assignedTickets     Ticket[]             @relation("AssignedOfficer")
+  leadTickets         Ticket[]             @relation("AssignedTeamLead")
+  submittedRepairs    Repair[]             @relation("SubmittedRepairs")
+  approvedRepairs     Repair[]             @relation("ApprovedRepairs")
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+
+  @@map("users")
+}
+
+model Department {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  wardIdentifier String   @unique
+  createdAt      DateTime @default(now())
+
+  @@map("departments")
+}
+
+model Complaint {
+  id          String          @id @default(uuid())
+  citizenId   String
+  citizen     User            @relation("CitizenComplaints", fields: [citizenId], references: [id])
+  title       String
+  description String?
+  latitude    Float
+  longitude   Float
+  addressText String?
+  status      ComplaintStatus @default(SUBMITTED)
+  ticketId    String?
+  ticket      Ticket?         @relation(fields: [ticketId], references: [id])
+  media       ComplaintMedia[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@map("complaints")
+}
+
+model ComplaintMedia {
+  id          String    @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  mediaUrl    String
+  mediaType   MediaType
+  createdAt   DateTime  @default(now())
+
+  @@map("complaint_media")
+}
+
+model Ticket {
+  id                 String         @id @default(uuid())
+  ticketNumber       String         @unique @default(cuid())
+  title              String
+  description        String?
+  priority           TicketPriority @default(MEDIUM)
+  status             TicketStatus   @default(OPEN)
+  latitude           Float
+  longitude          Float
+  wardIdentifier     String?
+  assignedOfficerId  String?
+  assignedOfficer    User?          @relation("AssignedOfficer", fields: [assignedOfficerId], references: [id])
+  assignedTeamLeadId String?
+  assignedTeamLead   User?          @relation("AssignedTeamLead", fields: [assignedTeamLeadId], references: [id])
+  slaDeadline        DateTime?
+  resolvedAt         DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  complaints        Complaint[]
+  potholeDetections PotholeDetection[]
+  repairs           Repair[]
+
+  @@map("tickets")
+}
+
+model PotholeDetection {
+  id               String    @id @default(uuid())
+  ticketId         String?
+  ticket           Ticket?   @relation(fields: [ticketId], references: [id])
+  uploadId         String?
+  upload           Upload?   @relation(fields: [uploadId], references: [id])
+  confidence       Float
+  severity         Severity
+  estimatedAreaSqm Float?
+  boundingBoxes    Json
+  annotatedImageUrl String?
+  rawImageUrl      String
+  latitude         Float?
+  longitude        Float?
+  isDuplicate      Boolean   @default(false)
+  clusterId        String?
+  detectedAt       DateTime  @default(now())
+
+  @@map("pothole_detections")
+}
+
+model Upload {
+  id               String       @id @default(uuid())
+  userId           String
+  user             User         @relation(fields: [userId], references: [id])
+  originalFilename String
+  storedFilename   String
+  mediaType        MediaType
+  filePath         String
+  fileSize         Int
+  status           UploadStatus @default(PENDING)
+  errorMessage     String?
+  latitude         Float?
+  longitude        Float?
+  hasGps           Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  detections PotholeDetection[]
+
+  @@map("uploads")
+}
+
+model Repair {
+  id                  String     @id @default(uuid())
+  ticketId            String
+  ticket              Ticket     @relation(fields: [ticketId], references: [id])
+  submittedById       String
+  submittedBy         User       @relation("SubmittedRepairs", fields: [submittedById], references: [id])
+  beforeMediaUrl      String?
+  afterMediaUrl       String
+  notes               String?
+  aiVerificationScore Float?
+  aiVerdict           AIVerdict?
+  officerApproved     Boolean?
+  officerApprovedById String?
+  officerApprovedBy   User?      @relation("ApprovedRepairs", fields: [officerApprovedById], references: [id])
+  officerApprovedAt   DateTime?
+  createdAt           DateTime   @default(now())
+
+  @@map("repairs")
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String
+  title       String
+  message     String
+  isRead      Boolean  @default(false)
+  relatedId   String?
+  relatedType String?
+  createdAt   DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String
+  entityType String?
+  entityId   String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@map("audit_logs")
+}
