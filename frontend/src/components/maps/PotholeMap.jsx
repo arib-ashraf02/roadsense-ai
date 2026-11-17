@@ -40,49 +40,54 @@ export default function PotholeMap({ points = [], center = [28.6139, 77.2090], z
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {points.map((p, idx) => {
-          const color = SEVERITY_COLORS[p.severity] || "#3b82f6";
-          const radius = p.severity === "CRITICAL" ? 12 : p.severity === "HIGH" ? 10 : 8;
+        {points
+          .filter((p) => p && p.latitude != null && p.longitude != null)
+          .map((p, idx) => {
+            const lat = Number(p.latitude);
+            const lon = Number(p.longitude);
+            if (isNaN(lat) || isNaN(lon)) return null;
+            const color = SEVERITY_COLORS[p.severity] || "#3b82f6";
+            const radius = p.severity === "CRITICAL" ? 12 : p.severity === "HIGH" ? 10 : 8;
 
-          return (
-            <CircleMarker
-              key={p.id || idx}
-              center={[p.latitude, p.longitude]}
-              pathOptions={{
-                color: color,
-                fillColor: color,
-                fillOpacity: 0.7,
-                weight: 2,
-              }}
-              radius={radius}
-            >
-              <Popup>
-                <div className="space-y-1.5 p-1 text-xs">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-slate-900">Road Defect</span>
-                    <span
-                      className="rounded px-1.5 py-0.5 text-[10px] font-bold text-white"
-                      style={{ backgroundColor: color }}
-                    >
-                      {p.severity}
-                    </span>
-                  </div>
-                  <p className="text-slate-600">
-                    Confidence: {p.confidence ? `${Math.round(p.confidence * 100)}%` : "N/A"}
-                  </p>
-                  <p className="text-slate-500 font-mono text-[10px]">
-                    {p.latitude.toFixed(5)}, {p.longitude.toFixed(5)}
-                  </p>
-                  {p.detected_at && (
-                    <p className="text-slate-400 text-[10px]">
-                      {new Date(p.detected_at).toLocaleDateString()}
+            return (
+              <CircleMarker
+                key={p.id || idx}
+                center={[lat, lon]}
+                pathOptions={{
+                  color: color,
+                  fillColor: color,
+                  fillOpacity: 0.7,
+                  weight: 2,
+                }}
+                radius={radius}
+              >
+                <Popup>
+                  <div className="space-y-1.5 p-1 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-slate-900">Road Defect</span>
+                      <span
+                        className="rounded px-1.5 py-0.5 text-[10px] font-bold text-white"
+                        style={{ backgroundColor: color }}
+                      >
+                        {p.severity}
+                      </span>
+                    </div>
+                    <p className="text-slate-600">
+                      Confidence: {p.confidence ? `${Math.round(p.confidence * 100)}%` : "N/A"}
                     </p>
-                  )}
-                </div>
-              </Popup>
-            </CircleMarker>
-          );
-        })}
+                    <p className="text-slate-500 font-mono text-[10px]">
+                      {lat.toFixed(5)}, {lon.toFixed(5)}
+                    </p>
+                    {p.detected_at && (
+                      <p className="text-slate-400 text-[10px]">
+                        {new Date(p.detected_at).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                </Popup>
+              </CircleMarker>
+            );
+          })}
       </MapContainer>
     </div>
   );

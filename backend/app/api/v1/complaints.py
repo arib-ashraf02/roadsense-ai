@@ -47,7 +47,7 @@ async def create_complaint(
     await db.refresh(complaint)
 
     # 2. Add media if specified
-    if hasattr(payload, "media_urls") and payload.media_urls:
+    if payload.media_urls:
         for url in payload.media_urls:
             media = ComplaintMedia(
                 complaint_id=complaint.id,

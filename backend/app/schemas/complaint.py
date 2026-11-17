@@ -12,12 +12,21 @@ class ComplaintStatus(str, Enum):
     REJECTED = "REJECTED"
 
 
+class ComplaintMediaOut(BaseModel):
+    id: str
+    media_url: str
+    media_type: str
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
 class ComplaintCreate(BaseModel):
     title: str = Field(..., min_length=5, max_length=200)
     description: Optional[str] = None
     latitude: float = Field(..., ge=-90, le=90)
     longitude: float = Field(..., ge=-180, le=180)
     address_text: Optional[str] = None
+    media_urls: Optional[List[str]] = None
 
 
 class ComplaintUpdate(BaseModel):
@@ -36,6 +45,7 @@ class ComplaintOut(BaseModel):
     address_text: Optional[str]
     status: ComplaintStatus
     ticket_id: Optional[str]
+    media: Optional[List[ComplaintMediaOut]] = []
     created_at: datetime
     updated_at: datetime
 

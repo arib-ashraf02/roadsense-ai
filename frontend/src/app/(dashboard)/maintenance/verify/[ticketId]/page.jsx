@@ -90,7 +90,7 @@ export default function RepairVerificationPage() {
       let afterMediaUrl = previewUrl;
       if (upRes.ok) {
         const upData = await upRes.json();
-        afterMediaUrl = upData.annotated_image_path || previewUrl;
+        afterMediaUrl = upData.annotated_image_path || upData.upload?.media_url || upData.upload?.file_path || previewUrl;
       }
 
       // 2. Submit Repair Record with AI advisory verification

@@ -6,12 +6,50 @@ from app.services.yolo_service import yolo_service
 logger = logging.getLogger(__name__)
 
 
+def _resolve_image_path(path_str: str) -> Path:
+    """Resolves local file paths or web /uploads/... URLs to an existing Path on disk."""
+    if not path_str:
+        return Path("")
+    p = Path(path_str)
+    if p.exists():
+        return p
+    try:
+        from app.core.config import settings
+        upload_base = Path(settings.UPLOAD_DIR)
+        clean = path_str.replace("\\", "/").lstrip("/")
+        if clean.startswith("uploads/"):
+            cand = upload_base / clean[len("uploads/"):]
+            if cand.exists():
+                return cand
+        cand = upload_base / "images" / p.name
+        if cand.exists():
+            return cand
+        cand = upload_base / p.name
+        if cand.exists():
+            return cand
+    except Exception as e:
+        logger.debug(f"Path resolution error for {path_str}: {e}")
+    return p
+
+
 def verify_repair_evidence(before_image_path: Optional[str], after_image_path: str) -> Dict[str, Any]:
     """
     Analyzes before-and-after repair photographs using computer vision.
     Provides an objective AI verification recommendation for municipal officers.
     NOTE: The municipal officer MUST make the final sign-off. AI provides an advisory verdict.
     """
+    resolved_after = _resolve_image_path(after_image_path)
+    if not resolved_after.exists():
+        return {
+            "ai_verification_score": 0.0,
+            "patch_detected": False,
+            "pothole_absent": False,
+            "verdict": "FAILED",
+            "notes": "After-repair photograph could not be found."
+        }
+
+    actual_after_str = str(resolved_after)
+
     try:
         import cv2
         import numpy as np
@@ -24,17 +62,8 @@ def verify_repair_evidence(before_image_path: Optional[str], after_image_path: s
             "notes": "Computer vision libraries unavailable. Manual officer review required."
         }
 
-    if not Path(after_image_path).exists():
-        return {
-            "ai_verification_score": 0.0,
-            "patch_detected": False,
-            "pothole_absent": False,
-            "verdict": "FAILED",
-            "notes": "After-repair photograph could not be found."
-        }
-
     # 1. Run YOLO inference on after-repair image
-    after_detections = yolo_service.detect(after_image_path)
+    after_detections = yolo_service.detect(actual_after_str)
     potholes_found_after = len(after_detections.get("detections", []))
 
     pothole_absent = (potholes_found_after == 0)
@@ -42,7 +71,7 @@ def verify_repair_evidence(before_image_path: Optional[str], after_image_path: s
     # 2. Analyze surface texture for asphalt patch characteristics
     patch_detected = False
     try:
-        img = cv2.imread(after_image_path)
+        img = cv2.imread(actual_after_str)
         if img is not None:
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             # Edge detection to check surface smoothness / roughness transition

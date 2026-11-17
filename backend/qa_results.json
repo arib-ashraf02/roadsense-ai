@@ -1,0 +1,370 @@
+[
+  {
+    "feature": "System Health",
+    "test_case": "GET /api/v1/health",
+    "expected": "HTTP 200 with status 'healthy'",
+    "actual": "HTTP 200 {'status': 'healthy', 'service': 'RoadSense AI Backend', 'version': '1.0.0', 'timestamp': '2026-11-17T18:41:48.647748+00:00', 'components': {'api_gateway': 'operational', 'vision_engine': 'ready', 'spatial_engine': 'standby', 'database': 'standby'}}",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "System Health",
+    "test_case": "GET / Root Endpoint",
+    "expected": "HTTP 200 with welcome message",
+    "actual": "HTTP 200 Welcome to RoadSense AI API",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Authentication",
+    "test_case": "Login as ADMIN",
+    "expected": "HTTP 200 + access_token",
+    "actual": "HTTP 200",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Authentication",
+    "test_case": "Profile verify ADMIN",
+    "expected": "Role: ADMIN",
+    "actual": "Role: ADMIN",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Authentication",
+    "test_case": "Login as OFFICER",
+    "expected": "HTTP 200 + access_token",
+    "actual": "HTTP 200",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Authentication",
+    "test_case": "Profile verify OFFICER",
+    "expected": "Role: OFFICER",
+    "actual": "Role: OFFICER",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Authentication",
+    "test_case": "Login as CITIZEN",
+    "expected": "HTTP 200 + access_token",
+    "actual": "HTTP 200",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Authentication",
+    "test_case": "Profile verify CITIZEN",
+    "expected": "Role: CITIZEN",
+    "actual": "Role: CITIZEN",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Authentication",
+    "test_case": "Login as MAINTENANCE",
+    "expected": "HTTP 200 + access_token",
+    "actual": "HTTP 200",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Authentication",
+    "test_case": "Profile verify MAINTENANCE",
+    "expected": "Role: MAINTENANCE",
+    "actual": "Role: MAINTENANCE",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Authentication",
+    "test_case": "Login with invalid password",
+    "expected": "HTTP 401 Unauthorized",
+    "actual": "HTTP 401",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Authentication",
+    "test_case": "Register duplicate email",
+    "expected": "HTTP 409 Conflict",
+    "actual": "HTTP 409",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "RBAC",
+    "test_case": "Citizen access Admin users list",
+    "expected": "HTTP 403 Forbidden",
+    "actual": "HTTP 403",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "AI Detection",
+    "test_case": "POST /detection/image valid JPEG",
+    "expected": "HTTP 200 with structured detections schema",
+    "actual": "model_status=unavailable, count=0",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "AI Detection",
+    "test_case": "Upload unsupported file type (text/plain)",
+    "expected": "HTTP 415 Unsupported Media Type",
+    "actual": "HTTP 415",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "AI Detection",
+    "test_case": "GET /detection/history paginated",
+    "expected": "HTTP 200 + items list",
+    "actual": "Total: 6, items: 6",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "AI Detection",
+    "test_case": "GET /detection/{id} single record",
+    "expected": "HTTP 200 + matching detection ID",
+    "actual": "ID=cd026db1",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Uploads Ingestion",
+    "test_case": "GET /uploads/ paginated list",
+    "expected": "HTTP 200 + items list",
+    "actual": "Total: 0",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Video Processing",
+    "test_case": "POST /detection/video upload MP4",
+    "expected": "HTTP 202 Accepted + job_id",
+    "actual": "job_id=11b4ca6c-dfa8-457b-9f87-fb533961ce75, status=PENDING",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Video Processing",
+    "test_case": "Poll video background job completion",
+    "expected": "Job status transitions to COMPLETED",
+    "actual": "Status: COMPLETED, frames: 2",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Video Processing",
+    "test_case": "Poll non-existent job ID",
+    "expected": "HTTP 404 Not Found",
+    "actual": "HTTP 404",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Spatial Engine",
+    "test_case": "Proximity match within 15m radius",
+    "expected": "is_duplicate: True + matched_ticket",
+    "actual": "is_duplicate=True, dist=4.4m",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Spatial Engine",
+    "test_case": "Distant point (>50m) deduplication",
+    "expected": "is_duplicate: False",
+    "actual": "is_duplicate=False",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Spatial Engine",
+    "test_case": "Validate latitude bounds (-90 to +90)",
+    "expected": "HTTP 422 Validation Error",
+    "actual": "HTTP 422",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "GIS Map Canvas",
+    "test_case": "GET /spatial/potholes map markers",
+    "expected": "HTTP 200 + geotagged defect coordinates",
+    "actual": "Loaded 6 defect points",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "GIS Map Canvas",
+    "test_case": "GET /spatial/clusters spatial density",
+    "expected": "HTTP 200 + cluster points",
+    "actual": "Loaded 4 clusters",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Complaints",
+    "test_case": "Citizen create complaint with coordinates",
+    "expected": "HTTP 201 + SUBMITTED status",
+    "actual": "Status: SUBMITTED",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Complaints",
+    "test_case": "Fetch complaint by ID",
+    "expected": "HTTP 200 + matching record",
+    "actual": "ID=fb017f80",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Complaints",
+    "test_case": "Officer triage complaint (status=TRIAGED)",
+    "expected": "HTTP 200 + status=TRIAGED",
+    "actual": "Status: TRIAGED",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Tickets",
+    "test_case": "Officer create maintenance ticket",
+    "expected": "HTTP 201 + ticket_number generated",
+    "actual": "TKT: TKT-202611-E255F7",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Tickets",
+    "test_case": "Maintenance queue filter (assigned_to_me)",
+    "expected": "Ticket appears in field crew queue",
+    "actual": "Found 6 task(s)",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Tickets",
+    "test_case": "Field crew marks ticket IN_REPAIR",
+    "expected": "HTTP 200 + status=IN_REPAIR",
+    "actual": "Status: IN_REPAIR",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Repair Verification",
+    "test_case": "Submit repair proof with AI advisory scoring",
+    "expected": "HTTP 201 + score (0-1) + verdict",
+    "actual": "score=0.92, verdict=PASSED",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Repair Verification",
+    "test_case": "Ticket status auto-transition on proof upload",
+    "expected": "status=AWAITING_VERIFICATION",
+    "actual": "status=AWAITING_VERIFICATION",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Repair Verification",
+    "test_case": "Officer final approval sign-off",
+    "expected": "officer_approved=True",
+    "actual": "approved=True",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Repair Verification",
+    "test_case": "Ticket closure & resolution timestamp",
+    "expected": "status=CLOSED + resolved_at set",
+    "actual": "status=CLOSED, resolved_at=2026-11-17T18:41:50",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Analytics",
+    "test_case": "GET /analytics/overview",
+    "expected": "Real DB aggregates for complaints and tickets",
+    "actual": "Complaints: 10, Tickets: 9",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Analytics",
+    "test_case": "GET /analytics/severity",
+    "expected": "4 severity grade counts (Low, Med, High, Crit)",
+    "actual": "Categories: 4",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Analytics",
+    "test_case": "GET /analytics/trends",
+    "expected": "7-day time series data points",
+    "actual": "Points: 7",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "AI Assistant",
+    "test_case": "Query: Hazard intent",
+    "expected": "Natural language answer backed by real DB stats",
+    "actual": "Reply length: 308 chars",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "AI Assistant",
+    "test_case": "Query: Complaint intent",
+    "expected": "Natural language answer backed by real DB stats",
+    "actual": "Reply length: 247 chars",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "AI Assistant",
+    "test_case": "Query: SLA intent",
+    "expected": "Natural language answer backed by real DB stats",
+    "actual": "Reply length: 253 chars",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Notifications",
+    "test_case": "Citizen in-app notifications fetch",
+    "expected": "HTTP 200 + notification records",
+    "actual": "Received 13 notifs",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Notifications",
+    "test_case": "GET /notifications/unread-count",
+    "expected": "HTTP 200 + unread_count key",
+    "actual": "Count: 2",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "Notifications",
+    "test_case": "POST /notifications/read-all",
+    "expected": "HTTP 200 success",
+    "actual": "All marked as read",
+    "status": "PASS",
+    "severity": "N/A"
+  },
+  {
+    "feature": "User Governance",
+    "test_case": "Admin list all users",
+    "expected": "HTTP 200 + list of all users",
+    "actual": "Found 4 users",
+    "status": "PASS",
+    "severity": "N/A"
+  }
+]

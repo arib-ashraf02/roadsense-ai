@@ -179,7 +179,11 @@ export default function ReportPotholePage() {
         latitude: coords.lat,
         longitude: coords.lon,
         address_text: addressText || `${coords.lat}, ${coords.lon}`,
-        media_urls: detectionData?.annotated_image_path ? [detectionData.annotated_image_path] : [],
+        media_urls: detectionData?.annotated_image_path
+          ? [detectionData.annotated_image_path]
+          : detectionData?.upload?.media_url
+          ? [detectionData.upload.media_url]
+          : [],
       };
 
       const compRes = await fetch(`${apiUrl}/complaints/`, {

@@ -25,6 +25,13 @@ from app.schemas.detection import DetectionOut, DetectionResult, VideoJobStatus,
 from app.services.yolo_service import yolo_service
 from app.services.severity_service import generate_summary, enrich_detections
 
+from app.core.config import settings
+from app.core.database import get_db
+from app.models.detection import PotholeDetection
+from app.services.exif_service import extract_gps
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, desc
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -32,7 +39,7 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 # Upload directory setup
 # ---------------------------------------------------------------------------
-UPLOADS_BASE = Path(os.getenv("UPLOADS_DIR", "uploads"))
+UPLOADS_BASE = Path(settings.UPLOAD_DIR)
 IMAGES_DIR = UPLOADS_BASE / "images"
 VIDEOS_DIR = UPLOADS_BASE / "videos"
 FRAMES_DIR = UPLOADS_BASE / "frames"
@@ -96,11 +103,27 @@ async def detect_image(
     # Enrich detections with descriptions
     result["detections"] = enrich_detections(result.get("detections", []))
     result["summary"] = generate_summary(result.get("detections", []))
+
+    # Extract EXIF GPS if present in image
+    exif_lat, exif_lon = extract_gps(file_path)
+
+    media_url = f"/uploads/images/{stored_name}"
+    annotated_url = None
+    if result.get("annotated_image_path"):
+        annotated_url = f"/uploads/annotated/{Path(result['annotated_image_path']).name}"
+
     result["upload"] = {
         "stored_filename": stored_name,
         "file_path": file_path,
         "file_size": file_size,
         "original_filename": file.filename,
+        "media_url": media_url,
+    }
+    result["annotated_image_url"] = annotated_url
+    result["gps"] = {
+        "latitude": exif_lat,
+        "longitude": exif_lon,
+        "has_gps": (exif_lat is not None and exif_lon is not None),
     }
 
     return result
@@ -174,25 +197,46 @@ async def get_job_status(job_id: str):
 
 
 # ---------------------------------------------------------------------------
-# GET /detection/history  (stub — requires DB session in full impl)
+# GET /detection/history
 # ---------------------------------------------------------------------------
 
 @router.get("/history")
 async def detection_history(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
 ):
     """
-    List the current user's past detections (paginated).
-    NOTE: Full implementation requires auth dependency + DB session.
-          Returns empty list until auth layer is wired up.
+    List past pothole detections from database (paginated).
     """
+    offset = (page - 1) * page_size
+    total = await db.scalar(select(func.count(PotholeDetection.id))) or 0
+    stmt = (
+        select(PotholeDetection)
+        .order_by(desc(PotholeDetection.detected_at))
+        .offset(offset)
+        .limit(page_size)
+    )
+    res = await db.execute(stmt)
+    items = res.scalars().all()
     return {
         "page": page,
         "page_size": page_size,
-        "total": 0,
-        "items": [],
-        "note": "Auth integration pending — results will appear after user auth is wired.",
+        "total": total,
+        "items": [
+            {
+                "id": d.id,
+                "confidence": d.confidence,
+                "severity": d.severity.value if hasattr(d.severity, "value") else str(d.severity),
+                "latitude": d.latitude,
+                "longitude": d.longitude,
+                "estimated_area_sqm": d.estimated_area_sqm,
+                "annotated_image_url": d.annotated_image_url,
+                "raw_image_url": d.raw_image_url,
+                "detected_at": d.detected_at.isoformat() if d.detected_at else None,
+            }
+            for d in items
+        ],
     }
 
 
@@ -201,12 +245,30 @@ async def detection_history(
 # ---------------------------------------------------------------------------
 
 @router.get("/{detection_id}")
-async def get_detection(detection_id: str):
+async def get_detection(detection_id: str, db: AsyncSession = Depends(get_db)):
     """
     Fetch a single detection record by ID.
-    NOTE: Full implementation requires DB session.
     """
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Single-detection lookup will be available after DB integration.",
-    )
+    stmt = select(PotholeDetection).where(PotholeDetection.id == detection_id)
+    res = await db.execute(stmt)
+    d = res.scalar_one_or_none()
+    if not d:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Detection with ID '{detection_id}' not found.",
+        )
+    return {
+        "id": d.id,
+        "confidence": d.confidence,
+        "severity": d.severity.value if hasattr(d.severity, "value") else str(d.severity),
+        "latitude": d.latitude,
+        "longitude": d.longitude,
+        "estimated_area_sqm": d.estimated_area_sqm,
+        "bounding_boxes": d.bounding_boxes,
+        "annotated_image_url": d.annotated_image_url,
+        "raw_image_url": d.raw_image_url,
+        "is_duplicate": d.is_duplicate,
+        "cluster_id": d.cluster_id,
+        "ticket_id": d.ticket_id,
+        "detected_at": d.detected_at.isoformat() if d.detected_at else None,
+    }

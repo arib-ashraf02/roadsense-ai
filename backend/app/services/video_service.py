@@ -14,8 +14,11 @@ from app.core.job_store import create_job, update_job, get_job
 
 logger = logging.getLogger(__name__)
 
-UPLOADS_BASE = Path(os.getenv("UPLOADS_DIR", "uploads"))
+from app.core.config import settings
+
+UPLOADS_BASE = Path(settings.UPLOAD_DIR)
 FRAMES_DIR = UPLOADS_BASE / "frames"
+
 
 
 def extract_frames(video_path: str, output_dir: str, fps: float = 0.67) -> List[str]:

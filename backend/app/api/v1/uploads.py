@@ -14,8 +14,13 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, desc
 
+from app.core.config import settings
+from app.core.database import get_db
+from app.models.detection import Upload, MediaTypeEnum, UploadStatusEnum
 from app.services.exif_service import extract_gps
 from app.core.job_store import create_job
 
@@ -26,7 +31,7 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 # Directory setup (mirrors detection.py)
 # ---------------------------------------------------------------------------
-UPLOADS_BASE = Path(os.getenv("UPLOADS_DIR", "uploads"))
+UPLOADS_BASE = Path(settings.UPLOAD_DIR)
 IMAGES_DIR = UPLOADS_BASE / "images"
 VIDEOS_DIR = UPLOADS_BASE / "videos"
 FRAMES_DIR = UPLOADS_BASE / "frames"
@@ -158,17 +163,35 @@ async def create_upload(
 async def list_uploads(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
 ):
     """
-    List the current user's uploads.
-    NOTE: Full implementation requires auth + DB. Returns placeholder until wired.
+    List uploads from database (paginated).
     """
+    offset = (page - 1) * page_size
+    total = await db.scalar(select(func.count(Upload.id))) or 0
+    stmt = select(Upload).order_by(desc(Upload.created_at)).offset(offset).limit(page_size)
+    res = await db.execute(stmt)
+    records = res.scalars().all()
     return {
         "page": page,
         "page_size": page_size,
-        "total": 0,
-        "items": [],
-        "note": "Auth + DB integration pending.",
+        "total": total,
+        "items": [
+            {
+                "id": u.id,
+                "original_filename": u.original_filename,
+                "stored_filename": u.stored_filename,
+                "media_type": u.media_type.value if hasattr(u.media_type, "value") else str(u.media_type),
+                "media_url": f"/uploads/{'images' if str(u.media_type) == 'IMAGE' else 'videos'}/{u.stored_filename}",
+                "status": u.status.value if hasattr(u.status, "value") else str(u.status),
+                "latitude": u.latitude,
+                "longitude": u.longitude,
+                "has_gps": u.has_gps,
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+            }
+            for u in records
+        ],
     }
 
 
@@ -177,12 +200,29 @@ async def list_uploads(
 # ---------------------------------------------------------------------------
 
 @router.get("/{upload_id}")
-async def get_upload(upload_id: str):
+async def get_upload(upload_id: str, db: AsyncSession = Depends(get_db)):
     """
-    Fetch a single upload record.
-    NOTE: Full implementation requires DB session.
+    Fetch a single upload record by ID.
     """
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Single-upload lookup will be available after DB integration.",
-    )
+    stmt = select(Upload).where(Upload.id == upload_id)
+    res = await db.execute(stmt)
+    u = res.scalar_one_or_none()
+    if not u:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Upload with ID '{upload_id}' not found.",
+        )
+    return {
+        "id": u.id,
+        "original_filename": u.original_filename,
+        "stored_filename": u.stored_filename,
+        "media_type": u.media_type.value if hasattr(u.media_type, "value") else str(u.media_type),
+        "media_url": f"/uploads/{'images' if str(u.media_type) == 'IMAGE' else 'videos'}/{u.stored_filename}",
+        "file_path": u.file_path,
+        "file_size": u.file_size,
+        "status": u.status.value if hasattr(u.status, "value") else str(u.status),
+        "latitude": u.latitude,
+        "longitude": u.longitude,
+        "has_gps": u.has_gps,
+        "created_at": u.created_at.isoformat() if u.created_at else None,
+    }

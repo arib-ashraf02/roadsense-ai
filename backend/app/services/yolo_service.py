@@ -52,7 +52,18 @@ class YOLOService:
             }
         try:
             import cv2
-            img = cv2.imread(image_path)
+            resolved_p = Path(image_path)
+            if not resolved_p.exists():
+                from app.core.config import settings
+                cand = Path(settings.UPLOAD_DIR) / "images" / resolved_p.name
+                if cand.exists():
+                    resolved_p = cand
+                else:
+                    cand = Path(settings.UPLOAD_DIR) / resolved_p.name
+                    if cand.exists():
+                        resolved_p = cand
+
+            img = cv2.imread(str(resolved_p))
             if img is None:
                 raise ValueError(f"Cannot read image at {image_path}")
             results = self.model(img, conf=conf_threshold, verbose=False)
