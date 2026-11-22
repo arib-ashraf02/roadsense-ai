@@ -44,7 +44,6 @@ backend/wheels/
 backend/roadsense.db
 
 # ---- Uploaded files (local dev) ----------------------------
-uploads/
 backend/uploads/*
 !backend/uploads/.gitkeep
 

@@ -35,12 +35,13 @@ from app.core.security import hash_password
 # Support both SQLite (local dev) and PostgreSQL (production via DATABASE_URL env var)
 DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{backend_dir / 'roadsense.db'}")
 
-# asyncpg URL → sync psycopg2 URL for the seed script
+# asyncpg URL or bare postgresql URL → sync psycopg2 URL for the seed script
 if DATABASE_URL.startswith("postgresql+asyncpg://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
 elif DATABASE_URL.startswith("postgres://"):
-    # Heroku/Neon sometimes uses postgres:// — normalize
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 print(f"[SEED] Using database: {DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else DATABASE_URL}")
 

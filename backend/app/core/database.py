@@ -5,7 +5,21 @@ from app.core.config import settings
 
 # Determine database engine URL
 db_url = settings.DATABASE_URL
-# SQLite connection arguments
+
+# Normalize PostgreSQL URL for asyncpg
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+# Clean up unsupported query parameters for asyncpg if present
+if "channel_binding" in db_url:
+    import re
+    db_url = re.sub(r"[?&]channel_binding=[^&]+", "", db_url)
+    if "?" not in db_url and "&" in db_url:
+        db_url = db_url.replace("&", "?", 1)
+
+# SQLite vs PostgreSQL connection arguments
 connect_args = {}
 if "sqlite" in db_url:
     connect_args = {"check_same_thread": False}
