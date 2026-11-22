@@ -77,5 +77,6 @@ export const authOptions = {
     strategy: "jwt",
     maxAge: 60 * 60, // 1 hour
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "roadsense-ai-super-secret-key-32chars-min!!",
+  useSecureCookies: process.env.NODE_ENV === "production",
 };

@@ -45,6 +45,17 @@ async def create_ticket(
     await db.commit()
     await db.refresh(ticket)
 
+    # Link to complaint if specified
+    linked_comp_id = payload.complaint_id or payload.complaintId
+    if linked_comp_id:
+        from app.models.complaint import Complaint, ComplaintStatus
+        comp_res = await db.execute(select(Complaint).where(Complaint.id == linked_comp_id))
+        comp = comp_res.scalar_one_or_none()
+        if comp:
+            comp.ticket_id = ticket.id
+            comp.status = ComplaintStatus.TRIAGED
+            await db.commit()
+
     # If assigned to team lead on creation, notify team lead
     if ticket.assigned_team_lead_id:
         await create_notification(
@@ -145,3 +156,17 @@ async def update_ticket(
     await db.commit()
     await db.refresh(ticket)
     return ticket
+
+
+@router.patch("/{ticket_id}/status", response_model=TicketOut)
+@router.put("/{ticket_id}/status", response_model=TicketOut)
+async def update_ticket_status_alias(
+    ticket_id: str,
+    payload: TicketUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Alias endpoint for updating ticket status.
+    """
+    return await update_ticket(ticket_id, payload, db, current_user)

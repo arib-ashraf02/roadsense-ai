@@ -5,7 +5,8 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Compass, Mail, Lock, AlertCircle, Loader2 } from "lucide-react";
+import { Compass, Mail, Lock, AlertCircle, Loader2, ArrowRight, ShieldCheck } from "lucide-react";
+import { ThemeSwitcherModal } from "@/components/common/ThemeSwitcherModal";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError("Invalid email or password. Please try again.");
       } else {
-        router.push("/dashboard");
+        router.push("/citizen");
       }
     } catch (err) {
       setError("Something went wrong. Please try again.");
@@ -37,110 +38,143 @@ export default function LoginPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-            className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30"
-          >
-            <Compass className="w-9 h-9 text-white" strokeWidth={1.5} />
-          </motion.div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">RoadSense AI</h1>
-          <p className="text-slate-400 text-sm mt-1">Intelligent Road Defect Management</p>
-        </div>
+  const fillQuickLogin = (email, password) => {
+    setForm({ email, password });
+    setError("");
+  };
 
-        {/* Card */}
+  return (
+    <div className="min-h-screen bg-transparent text-foreground flex flex-col justify-between p-4 sm:p-8 transition-colors duration-200">
+      {/* Top Header */}
+      <div className="flex items-center justify-between mx-auto w-full max-w-5xl">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/25">
+            <Compass className="h-5 w-5" />
+          </div>
+          <span className="font-extrabold text-foreground text-base tracking-tight">
+            RoadSense<span className="text-primary font-black">.ai</span>
+          </span>
+        </Link>
+        <ThemeSwitcherModal />
+      </div>
+
+      {/* Main Login Card */}
+      <div className="mx-auto w-full max-w-md my-auto py-8">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="glass-panel border border-border p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6"
         >
-          <h2 className="text-xl font-semibold text-white mb-1">Welcome back</h2>
-          <p className="text-slate-400 text-sm mb-6">Sign in to your account to continue</p>
+          <div className="space-y-1 text-center">
+            <h1 className="text-2xl font-black text-foreground tracking-tight">
+              Sign In to RoadSense
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              Access role-based portals for reporting, triage, and repair verification
+            </p>
+          </div>
 
           {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-5 text-red-400 text-sm"
-            >
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              {error}
-            </motion.div>
+            <div className="flex items-center gap-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-rose-600 dark:text-rose-400 text-xs font-bold">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-slate-300 block mb-1.5">
-                Email address
-              </label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
                 <input
                   type="email"
                   required
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="you@example.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition"
+                  placeholder="name@roadsense.ai"
+                  className="w-full rounded-xl border border-border bg-card pl-10 pr-4 py-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-xs"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-slate-300 block mb-1.5">
-                Password
-              </label>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-foreground">Password</label>
+              </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Lock className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
                 <input
                   type="password"
                   required
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   placeholder="••••••••"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition"
+                  className="w-full rounded-xl border border-border bg-card pl-10 pr-4 py-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-xs"
                 />
               </div>
             </div>
 
             <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 mt-2"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary py-3 text-xs font-bold text-primary-foreground shadow-md shadow-primary/20 hover:opacity-95 transition disabled:opacity-50"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Signing in…
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Verifying Credentials...</span>
                 </>
               ) : (
-                "Sign In"
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
               )}
             </motion.button>
           </form>
 
-          <p className="text-center text-slate-400 text-sm mt-6">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
-              Create one
+          {/* Quick Demo Credentials */}
+          <div className="pt-2 border-t border-border space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">
+              Quick One-Click Test Accounts:
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              {[
+                { label: "Citizen User", email: "citizen@roadsense.ai", pass: "Citizen@12345" },
+                { label: "Municipal Officer", email: "officer@roadsense.ai", pass: "Officer@12345" },
+                { label: "Maintenance Crew", email: "maintenance@roadsense.ai", pass: "Maintenance@12345" },
+                { label: "Administrator", email: "admin@roadsense.ai", pass: "Admin@12345" },
+              ].map((account) => (
+                <motion.button
+                  key={account.label}
+                  whileHover={{ scale: 1.03, y: -1 }}
+                  whileTap={{ scale: 0.96 }}
+                  type="button"
+                  onClick={() => fillQuickLogin(account.email, account.pass)}
+                  className="rounded-xl border border-border bg-card p-2 text-center font-bold text-foreground hover:border-primary/50 hover:bg-accent transition-all shadow-xs"
+                >
+                  {account.label}
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          <div className="text-center text-xs text-muted-foreground pt-1">
+            <span>Don't have an account? </span>
+            <Link href="/register" className="font-bold text-primary hover:underline">
+              Create an Account
             </Link>
-          </p>
+          </div>
         </motion.div>
-      </motion.div>
+      </div>
+
+      {/* Footer */}
+      <div className="text-center text-[11px] text-muted-foreground">
+        RoadSense AI • Secure Municipal Authentication
+      </div>
     </div>
   );
 }

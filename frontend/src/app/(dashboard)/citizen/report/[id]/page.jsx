@@ -14,10 +14,8 @@ import {
   ArrowLeft,
   Wrench,
   ShieldCheck,
+  Compass,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 export default function ComplaintDetailPage() {
   const { id } = useParams();
@@ -47,16 +45,23 @@ export default function ComplaintDetailPage() {
   }, [id, session]);
 
   if (loading) {
-    return <div className="py-12 text-center text-sm text-slate-500">Loading complaint details...</div>;
+    return (
+      <div className="py-16 text-center text-xs font-semibold text-muted-foreground">
+        Loading complaint telemetry...
+      </div>
+    );
   }
 
   if (!complaint) {
     return (
-      <div className="py-12 text-center space-y-3">
-        <p className="text-sm font-semibold text-slate-800">Complaint not found.</p>
-        <Link href="/citizen/my-reports">
-          <Button size="sm" variant="outline">Back to My Grievances</Button>
-        </Link>
+      <div className="editorial-card text-center py-12 space-y-4 max-w-md mx-auto">
+        <p className="text-sm font-bold text-foreground">Complaint record not found.</p>
+        <button
+          onClick={() => router.push("/citizen/my-reports")}
+          className="rounded-full bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow-sm"
+        >
+          Back to Grievances
+        </button>
       </div>
     );
   }
@@ -81,97 +86,109 @@ export default function ComplaintDetailPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6 pb-16">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => router.back()} className="gap-1.5 text-xs">
-          <ArrowLeft className="h-3.5 w-3.5" /> Back
-        </Button>
+        <button
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-bold text-foreground shadow-xs hover:bg-accent transition"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          <span>Back to List</span>
+        </button>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{complaint.title}</h1>
-            <Badge variant="outline">{complaint.status}</Badge>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-black text-foreground">{complaint.title}</h1>
+            <span
+              className={`rounded-full px-3 py-0.5 text-[10px] font-black uppercase tracking-wider ${complaint.status === "RESOLVED"
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                : complaint.status === "SUBMITTED"
+                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                  : "bg-primary/10 text-primary border border-primary/20"
+                }`}
+            >
+              {complaint.status}
+            </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Logged on {new Date(complaint.created_at).toLocaleString()}
           </p>
         </div>
       </div>
 
       {/* Lifecycle Progress Stepper */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Grievance Lifecycle Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            {steps.map((st, sIdx) => (
-              <div key={sIdx} className="flex items-center gap-2">
-                <div
-                  className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                    st.done ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400"
-                  }`}
+      <div className="editorial-card space-y-4">
+        <h3 className="text-sm font-bold text-foreground">Grievance Lifecycle</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {steps.map((st, sIdx) => (
+            <div
+              key={sIdx}
+              className={`rounded-2xl border p-3.5 space-y-1.5 transition-all ${st.done
+                ? "border-primary/40 bg-primary/5 text-foreground"
+                : "border-border bg-card text-muted-foreground opacity-60"
+                }`}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-black ${st.done
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "bg-muted text-muted-foreground"
+                    }`}
                 >
                   {st.done ? "✓" : sIdx + 1}
-                </div>
-                <span className={`text-xs font-medium ${st.done ? "text-slate-800" : "text-slate-400"}`}>
-                  {st.label}
                 </span>
+                <span className="text-xs font-bold">{st.label}</span>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Details Grid */}
       <div className="grid gap-6 sm:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold">Location & Context</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-xs text-slate-600">
-            <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+        <div className="editorial-card space-y-4">
+          <h3 className="text-sm font-bold text-foreground">Spatial Telemetry</h3>
+          <div className="space-y-3 text-xs text-muted-foreground">
+            <div className="flex items-start gap-2.5">
+              <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-slate-800">Address / Coordinates</p>
-                <p>{complaint.address_text || "Coordinates Only"}</p>
-                <p className="font-mono text-slate-500 mt-0.5">
-                  {complaint.latitude.toFixed(6)}, {complaint.longitude.toFixed(6)}
+                <p className="font-bold text-foreground">Street Address / Landmark</p>
+                <p className="mt-0.5">{complaint.address_text || "Coordinates Only"}</p>
+                <p className="font-mono text-muted-foreground mt-1 text-[11px]">
+                  {Number(complaint.latitude).toFixed(6)}, {Number(complaint.longitude).toFixed(6)}
                 </p>
               </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-100 space-y-1">
-              <p className="font-semibold text-slate-800">Citizen Description</p>
+            <div className="pt-3 border-t border-border space-y-1">
+              <p className="font-bold text-foreground">Citizen Observations</p>
               <p className="leading-relaxed">{complaint.description || "No description provided."}</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold">Municipal Work Order</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-xs text-slate-600">
+        <div className="editorial-card space-y-4">
+          <h3 className="text-sm font-bold text-foreground">Municipal Work Order</h3>
+          <div className="space-y-3 text-xs text-muted-foreground">
             {complaint.ticket_id ? (
-              <div className="rounded-lg bg-blue-50/70 p-3.5 border border-blue-100 space-y-1.5">
-                <div className="flex items-center gap-1.5 text-blue-700 font-semibold">
+              <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-primary font-bold">
                   <Wrench className="h-4 w-4" />
-                  <span>Assigned Work Order #{complaint.ticket_id.slice(0, 8)}</span>
+                  <span>Work Ticket #{complaint.ticket_id.slice(0, 8)}</span>
                 </div>
-                <p className="text-slate-600 text-[11px]">
-                  A municipal maintenance crew has been dispatched to repair this defect.
+                <p className="text-xs text-muted-foreground">
+                  Municipal road maintenance team assigned. Repairs will undergo AI photo verification.
                 </p>
               </div>
             ) : (
-              <p className="text-slate-500">
-                Awaiting officer review. When approved, a formal work order ticket will appear here.
-              </p>
+              <div className="rounded-2xl border border-border bg-card p-4 text-xs text-muted-foreground">
+                Awaiting officer triage. Once dispatched, work order telemetry will update automatically.
+              </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -13,12 +13,8 @@ import {
   ShieldCheck,
   ArrowRight,
   Info,
+  Sparkles,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function RepairVerificationPage() {
   const { ticketId } = useParams();
@@ -122,138 +118,153 @@ export default function RepairVerificationPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6 pb-16">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-bold text-foreground mb-2">
+          <span className="h-2 w-2 rounded-full bg-primary" />
+          <span>Quality Assurance</span>
+        </div>
+        <h1 className="text-3xl font-black tracking-tight text-foreground">
           Submit Repair Evidence for Verification
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Work Order: <strong className="text-blue-700 font-mono">{ticket?.ticket_number || ticketId}</strong>
+        <p className="text-xs text-muted-foreground mt-1">
+          Work Order: <strong className="text-primary font-mono">{ticket?.ticket_number || ticketId}</strong>
         </p>
       </div>
 
       {verificationResult ? (
-        <Card className="border-emerald-200 bg-emerald-50/40">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-              <CardTitle className="text-lg text-emerald-900">Repair Proof Submitted Successfully!</CardTitle>
+        <div className="editorial-card border-emerald-500/30 bg-emerald-500/5 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-sm">
+              <CheckCircle2 className="h-6 w-6" />
             </div>
-            <CardDescription className="text-emerald-700">
-              AI verification analysis completed. Sent to Municipal Officer for final sign-off.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 rounded-xl border border-emerald-200 bg-white p-4">
-              <div>
-                <p className="text-xs text-slate-500">AI Verification Confidence</p>
-                <p className="text-2xl font-bold text-slate-900">
-                  {Math.round((verificationResult.ai_verification_score || 0.9) * 100)}%
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Advisory Recommendation</p>
-                <Badge variant="success" className="mt-1">
+            <div>
+              <h3 className="text-lg font-bold text-foreground">Repair Proof Submitted Successfully!</h3>
+              <p className="text-xs text-muted-foreground">
+                AI verification analysis completed. Sent to Municipal Officer for final sign-off.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 rounded-2xl border border-emerald-500/20 bg-card p-5">
+            <div>
+              <p className="text-xs font-bold text-muted-foreground">AI Verification Confidence</p>
+              <p className="text-3xl font-black text-foreground mt-1">
+                {Math.round((verificationResult.ai_verification_score || 0.9) * 100)}%
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-muted-foreground">Advisory Recommendation</p>
+              <div className="mt-2">
+                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-black text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   {verificationResult.ai_verdict || "PASSED"}
-                </Badge>
+                </span>
               </div>
             </div>
+          </div>
 
-            <Alert className="border-blue-200 bg-blue-50 text-blue-900">
-              <Info className="h-4 w-4 text-blue-600" />
-              <AlertTitle className="font-semibold text-xs">Human-in-the-Loop Safeguard</AlertTitle>
-              <AlertDescription className="text-xs text-blue-800">
-                In compliance with municipal audit guidelines, AI delivers an advisory recommendation.
-                Your assigned Municipal Officer conducts the final closure inspection.
-              </AlertDescription>
-            </Alert>
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-xs text-muted-foreground space-y-1">
+            <div className="flex items-center gap-2 text-primary font-bold">
+              <Info className="h-4 w-4" />
+              <span>Human-in-the-Loop Safeguard</span>
+            </div>
+            <p className="leading-relaxed">
+              In compliance with municipal audit guidelines, AI delivers an advisory recommendation. Your assigned Municipal Officer conducts the final closure inspection.
+            </p>
+          </div>
 
-            <Button
-              className="w-full bg-emerald-600 hover:bg-emerald-700 font-semibold"
-              onClick={() => router.push("/maintenance/tasks")}
-            >
-              Return to Work Queue
-            </Button>
-          </CardContent>
-        </Card>
+          <button
+            onClick={() => router.push("/maintenance/tasks")}
+            className="w-full rounded-full bg-emerald-600 py-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
+          >
+            Return to Work Queue
+          </button>
+        </div>
       ) : (
         <form onSubmit={handleSubmitEvidence} className="space-y-6">
           {error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Submission Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-700 dark:text-rose-400 text-xs font-bold">
+              {error}
+            </div>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">Upload "After-Repair" Photograph</CardTitle>
-              <CardDescription>
+          <div className="editorial-card space-y-4">
+            <div>
+              <h3 className="font-bold text-base text-foreground">
+                Upload "After-Repair" Photograph
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Photograph the repaired asphalt patch in clear daylight from a 45-degree perspective.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div
-                {...getRootProps()}
-                className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
-                  isDragActive
-                    ? "border-blue-500 bg-blue-50/50"
-                    : "border-slate-200 hover:border-slate-300 bg-slate-50/50"
-                }`}
-              >
-                <input {...getInputProps()} />
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <div className="rounded-full bg-amber-50 p-3 text-amber-600">
-                    <Camera className="h-6 w-6" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-700">
-                    Take or drop after-repair photo, or <span className="text-blue-600 underline">browse</span>
-                  </p>
-                  <p className="text-xs text-slate-400">AI will verify absence of pothole and presence of patch</p>
-                </div>
-              </div>
+              </p>
+            </div>
 
-              {previewUrl && (
-                <div className="relative h-48 w-full overflow-hidden rounded-xl border border-slate-200">
-                  <img src={previewUrl} alt="After repair proof" className="h-full w-full object-cover" />
+            <div
+              {...getRootProps()}
+              className={`cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-200 ${
+                isDragActive
+                  ? "border-primary bg-primary/10 shadow-inner"
+                  : "border-border bg-card/60 hover:border-primary/50 hover:bg-accent/30"
+              }`}
+            >
+              <input {...getInputProps()} />
+              <div className="flex flex-col items-center justify-center gap-2">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Camera className="h-6 w-6" />
                 </div>
-              )}
-
-              <div className="space-y-1.5 pt-2">
-                <label className="text-xs font-semibold text-slate-700">Repair Notes / Patch Materials</label>
-                <Textarea
-                  rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Applied 50mm hot mix asphalt, compacted with 2-ton roller, road reopened."
-                />
+                <p className="text-sm font-bold text-foreground">
+                  Take or drop after-repair photo, or <span className="text-primary underline">browse</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  AI will verify the absence of pothole cavity and presence of asphalt patch
+                </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            {previewUrl && (
+              <div className="relative h-48 w-full overflow-hidden rounded-2xl border border-border">
+                <img src={previewUrl} alt="After repair proof" className="h-full w-full object-cover" />
+              </div>
+            )}
+
+            <div className="space-y-1.5 pt-2">
+              <label className="text-xs font-bold text-foreground">
+                Repair Notes / Patch Materials
+              </label>
+              <textarea
+                rows={3}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="e.g. Applied 50mm hot mix asphalt, compacted with 2-ton roller, road reopened to traffic."
+                className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-xs resize-none"
+              />
+            </div>
+          </div>
 
           <div className="flex items-center justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={() => router.push("/maintenance/tasks")}>
+            <button
+              type="button"
+              onClick={() => router.push("/maintenance/tasks")}
+              className="rounded-full px-5 py-2.5 text-xs font-bold text-muted-foreground hover:text-foreground transition"
+            >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
-              size="lg"
               disabled={submitting || !file}
-              className="gap-2 bg-amber-600 text-white hover:bg-amber-700 font-semibold"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3 text-xs font-bold text-primary-foreground shadow-md shadow-primary/25 hover:opacity-90 transition disabled:opacity-50"
             >
               {submitting ? (
                 <>
                   <RefreshCw className="h-4 w-4 animate-spin" />
-                  Running AI Verification...
+                  <span>Running AI Verification...</span>
                 </>
               ) : (
                 <>
-                  Submit Evidence for Officer Sign-Off
+                  <span>Submit Evidence for Officer Sign-Off</span>
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
-            </Button>
+            </button>
           </div>
         </form>
       )}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useDropzone } from "react-dropzone";
 import EXIF from "exif-js";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload,
   Image as ImageIcon,
@@ -16,13 +17,11 @@ import {
   ArrowRight,
   ShieldAlert,
   Compass,
+  Sparkles,
+  Layers,
+  Check,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RoadSurface3D } from "@/components/three/RoadSurface3D";
 
 export default function ReportPotholePage() {
   const router = useRouter();
@@ -78,7 +77,6 @@ export default function ReportPotholePage() {
           setGpsSource("EXIF");
           checkDuplicate(latDecimal, lonDecimal);
         } else {
-          // Fallback to browser Geolocation API
           requestDeviceLocation();
         }
       });
@@ -122,9 +120,10 @@ export default function ReportPotholePage() {
   const checkDuplicate = async (lat, lon) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
-      const res = await fetch(`${apiUrl}/spatial/check-duplicate?latitude=${lat}&longitude=${lon}&radius_meters=15.0`, {
-        method: "POST",
-      });
+      const res = await fetch(
+        `${apiUrl}/spatial/check-duplicate?latitude=${lat}&longitude=${lon}&radius_meters=15.0`,
+        { method: "POST" }
+      );
       if (res.ok) {
         const data = await res.json();
         if (data.is_duplicate) {
@@ -146,7 +145,7 @@ export default function ReportPotholePage() {
       return;
     }
     if (coords.lat === null || coords.lon === null) {
-      setError("Please specify coordinates. Click 'Use Current Location' or enter manually.");
+      setError("Please specify coordinates. Click 'Use Device GPS' or enter manually.");
       return;
     }
 
@@ -174,8 +173,8 @@ export default function ReportPotholePage() {
 
       // 2. Create official complaint record
       const complaintPayload = {
-        title: title || `Road Pothole Defect near ${addressText || "Detected Location"}`,
-        description: description || `Severity: ${detectionData?.severity || "Assessed via computer vision"}.`,
+        title: title || `Road Pothole Defect near ${addressText || "Detected Coordinates"}`,
+        description: description || `Severity: ${detectionData?.severity || "Classified via YOLOv8 vision"}.`,
         latitude: coords.lat,
         longitude: coords.lon,
         address_text: addressText || `${coords.lat}, ${coords.lon}`,
@@ -199,7 +198,6 @@ export default function ReportPotholePage() {
         throw new Error("Grievance submission encountered an error.");
       }
 
-      // Redirect to citizen grievances after 1.5s
       setTimeout(() => {
         router.push("/citizen/my-reports");
       }, 1200);
@@ -211,201 +209,273 @@ export default function ReportPotholePage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
+    <div className="mx-auto max-w-4xl space-y-8 pb-16">
+      {/* Editorial Header */}
+      <div className="space-y-2">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1 text-xs font-bold text-foreground shadow-xs">
+          <span className="h-2 w-2 rounded-full bg-primary" />
+          <span>Citizen Road Audit</span>
+        </div>
+        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
           Report Road Hazard or Pothole
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Submit road imagery. Our YOLO vision engine classifies severity and checks for nearby duplicate reports automatically.
+        <p className="text-sm text-muted-foreground max-w-2xl">
+          Upload road imagery. Our YOLO vision engine analyzes severity and cross-references existing municipal repair tickets within 15 meters.
         </p>
       </div>
 
-      {duplicateWarning && (
-        <Alert variant="warning" className="border-amber-300 bg-amber-50 text-amber-900">
-          <AlertTriangle className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="font-semibold">Corroborating Existing Municipal Ticket</AlertTitle>
-          <AlertDescription className="text-xs text-amber-800 mt-1">
-            An active ticket <strong>{duplicateWarning.matched_ticket.ticket_number}</strong> ({duplicateWarning.matched_ticket.priority})
-            already exists {duplicateWarning.distance_meters}m away. Your photo will be linked as supporting evidence, boosting its municipal priority!
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Duplicate Alert Banner */}
+      <AnimatePresence>
+        {duplicateWarning && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="rounded-3xl border border-amber-500/40 bg-amber-500/10 p-5 shadow-sm"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-sm">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-foreground">
+                  Corroborating Existing Ticket: {duplicateWarning.matched_ticket?.ticket_number}
+                </h4>
+                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                  A work ticket already exists approximately <strong>{duplicateWarning.distance_meters} meters</strong> away with priority <strong>{duplicateWarning.matched_ticket?.priority}</strong>. Your report will be automatically attached as secondary verification, elevating its municipal dispatch score!
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
+      {/* Error Alert */}
       {error && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Submission Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="rounded-3xl border border-rose-500/30 bg-rose-500/10 p-5 text-rose-700 dark:text-rose-400">
+          <div className="flex items-center gap-2 font-bold text-sm">
+            <AlertTriangle className="h-4 w-4" />
+            <span>Submission Error</span>
+          </div>
+          <p className="mt-1 text-xs">{error}</p>
+        </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Step 1: Media Dropzone */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">1. Capture or Upload Media</CardTitle>
-            <CardDescription>Upload road surface photos (JPEG, PNG, WebP) or video clips (MP4, MOV)</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div
-              {...getRootProps()}
-              className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
-                isDragActive
-                  ? "border-blue-500 bg-blue-50/50"
-                  : "border-slate-200 hover:border-slate-300 bg-slate-50/50"
-              }`}
-            >
-              <input {...getInputProps()} />
-              <div className="flex flex-col items-center justify-center gap-2">
-                <div className="rounded-full bg-blue-50 p-3 text-blue-600">
-                  <Upload className="h-6 w-6" />
-                </div>
-                <p className="text-sm font-medium text-slate-700">
-                  Drag and drop road photo or video, or <span className="text-blue-600 underline">browse files</span>
+        <div className="editorial-card space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                1
+              </span>
+              <h3 className="font-bold text-base text-foreground">
+                Capture or Upload Media
+              </h3>
+            </div>
+            <span className="text-[11px] font-semibold text-muted-foreground">
+              Supports JPEG, PNG, MP4, MOV
+            </span>
+          </div>
+
+          <div
+            {...getRootProps()}
+            className={`cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-200 ${
+              isDragActive
+                ? "border-primary bg-primary/10 shadow-inner"
+                : "border-border bg-card/60 hover:border-primary/50 hover:bg-accent/30"
+            }`}
+          >
+            <input {...getInputProps()} />
+            <div className="flex flex-col items-center justify-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
+                <Upload className="h-7 w-7" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">
+                  Drag and drop road photo or video, or{" "}
+                  <span className="text-primary underline">browse your device</span>
                 </p>
-                <p className="text-xs text-slate-400">EXIF GPS metadata will be extracted automatically</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  EXIF geolocation metadata will be extracted automatically
+                </p>
               </div>
             </div>
+          </div>
 
-            {previewUrl && (
-              <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center">
-                <div className="relative h-28 w-44 overflow-hidden rounded-lg bg-slate-100">
-                  {mediaType === "IMAGE" ? (
-                    <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
-                  ) : (
-                    <video src={previewUrl} className="h-full w-full object-cover" controls />
-                  )}
+          {/* Media Preview & EXIF telemetry pill */}
+          {previewUrl && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col sm:flex-row items-center gap-5 rounded-2xl border border-border bg-card p-4 shadow-xs"
+            >
+              <div className="relative h-32 w-52 overflow-hidden rounded-xl bg-muted border border-border shrink-0">
+                {mediaType === "IMAGE" ? (
+                  <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+                ) : (
+                  <video src={previewUrl} className="h-full w-full object-cover" controls />
+                )}
+              </div>
+              <div className="space-y-1.5 text-xs text-muted-foreground w-full">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-sm text-foreground truncate max-w-[200px]">
+                    {file?.name}
+                  </h4>
+                  <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-accent-foreground">
+                    {mediaType}
+                  </span>
                 </div>
-                <div className="space-y-1 text-xs text-slate-600">
-                  <p className="font-semibold text-slate-800 text-sm">{file?.name}</p>
-                  <p>Type: {mediaType} ({Math.round((file?.size || 0) / 1024)} KB)</p>
-                  <div className="flex items-center gap-2 pt-1">
-                    <Badge variant={hasGps ? "success" : "warning"} className="text-[10px]">
-                      {hasGps ? `GPS: ${gpsSource}` : "GPS: Missing from EXIF"}
-                    </Badge>
-                  </div>
+                <p>Filesize: {Math.round((file?.size || 0) / 1024)} KB</p>
+                <div className="pt-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                      hasGps
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                    }`}
+                  >
+                    <MapPin className="h-3 w-3" />
+                    <span>{hasGps ? `GPS Locked (${gpsSource})` : "GPS Missing from EXIF"}</span>
+                  </span>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </motion.div>
+          )}
+        </div>
 
         {/* Step 2: Location Telemetry */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">2. Road Location & Coordinates</CardTitle>
-            <CardDescription>Associated GPS coordinates are required for municipal road repair dispatch</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Latitude</label>
-                <Input
-                  type="number"
-                  step="any"
-                  value={coords.lat ?? ""}
-                  onChange={(e) => setCoords({ ...coords, lat: parseFloat(e.target.value) || null })}
-                  placeholder="e.g. 28.613939"
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Longitude</label>
-                <Input
-                  type="number"
-                  step="any"
-                  value={coords.lon ?? ""}
-                  onChange={(e) => setCoords({ ...coords, lon: parseFloat(e.target.value) || null })}
-                  placeholder="e.g. 77.209021"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={requestDeviceLocation}
-                className="gap-1.5 text-xs"
-              >
-                <Compass className="h-3.5 w-3.5 text-blue-600" />
-                Use Current Device GPS
-              </Button>
-              <span className="text-xs text-slate-500">
-                {hasGps ? `Source: ${gpsSource}` : "Coordinates required for dispatch"}
+        <div className="editorial-card space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                2
               </span>
+              <h3 className="font-bold text-base text-foreground">
+                Road Location & Coordinates
+              </h3>
             </div>
+            <span className="text-[11px] font-semibold text-muted-foreground">
+              Required for municipal dispatch
+            </span>
+          </div>
 
-            <div className="space-y-1.5 pt-2">
-              <label className="text-xs font-semibold text-slate-700">Landmark or Street Address (Optional)</label>
-              <Input
-                value={addressText}
-                onChange={(e) => setAddressText(e.target.value)}
-                placeholder="e.g. Ring Road, Near Gate 3 Metro Station"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Step 3: Grievance Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">3. Additional Grievance Details</CardTitle>
-            <CardDescription>Provide context regarding traffic impact or road hazard</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">Complaint Title</label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Deep pothole on outer right lane causing accidents"
+              <label className="text-xs font-bold text-foreground">Latitude</label>
+              <input
+                type="number"
+                step="any"
+                value={coords.lat ?? ""}
+                onChange={(e) => setCoords({ ...coords, lat: parseFloat(e.target.value) || null })}
+                placeholder="e.g. 28.613939"
+                required
+                className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-xs"
               />
             </div>
-
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">Description</label>
-              <Textarea
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe size, depth, or specific danger to two-wheelers..."
+              <label className="text-xs font-bold text-foreground">Longitude</label>
+              <input
+                type="number"
+                step="any"
+                value={coords.lon ?? ""}
+                onChange={(e) => setCoords({ ...coords, lon: parseFloat(e.target.value) || null })}
+                placeholder="e.g. 77.209021"
+                required
+                className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-xs"
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Submit Button */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Button
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+            <button
+              type="button"
+              onClick={requestDeviceLocation}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold text-foreground shadow-xs hover:bg-accent transition"
+            >
+              <Compass className="h-3.5 w-3.5 text-primary" />
+              <span>Use Current Device GPS</span>
+            </button>
+            <span className="text-xs text-muted-foreground">
+              {hasGps ? `Source: ${gpsSource}` : "Manual coordinate input supported"}
+            </span>
+          </div>
+
+          <div className="space-y-1.5 pt-2">
+            <label className="text-xs font-bold text-foreground">
+              Street Landmark / Ward Name (Optional)
+            </label>
+            <input
+              type="text"
+              value={addressText}
+              onChange={(e) => setAddressText(e.target.value)}
+              placeholder="e.g. Ring Road, Outer Lane near Sector 4 Flyover"
+              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-xs"
+            />
+          </div>
+        </div>
+
+        {/* Step 3: Grievance Context */}
+        <div className="editorial-card space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+              3
+            </span>
+            <h3 className="font-bold text-base text-foreground">
+              Grievance Context & Details
+            </h3>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-foreground">Report Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Deep pothole damaging vehicle rims on main arterial corridor"
+              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-foreground">Description & Observed Danger</label>
+            <textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Specify approximate depth, water-logging, or specific risks to two-wheelers..."
+              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-xs resize-none"
+            />
+          </div>
+        </div>
+
+        {/* Submit Actions */}
+        <div className="flex items-center justify-end gap-4 pt-3">
+          <button
             type="button"
-            variant="ghost"
             onClick={() => router.push("/citizen")}
             disabled={uploading}
+            className="rounded-full px-6 py-3 text-xs font-bold text-muted-foreground hover:text-foreground transition"
           >
             Cancel
-          </Button>
-          <Button
+          </button>
+          <button
             type="submit"
-            size="lg"
             disabled={uploading || !file}
-            className="gap-2 bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow-md"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/25 hover:opacity-95 transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50"
           >
             {uploading ? (
               <>
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                Processing AI Telemetry & Submitting...
+                <span>Running YOLO Analysis & Submitting...</span>
               </>
             ) : (
               <>
-                Submit Grievance
+                <span>Submit Grievance to Municipality</span>
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
-          </Button>
+          </button>
         </div>
       </form>
     </div>

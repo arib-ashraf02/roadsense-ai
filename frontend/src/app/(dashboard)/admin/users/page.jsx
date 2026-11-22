@@ -10,10 +10,7 @@ import {
   CheckCircle,
   RefreshCw,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { EmptyStateIllustration } from "@/components/illustrations/EmptyStateIllustration";
 
 export default function AdminUsersPage() {
   const { data: session } = useSession();
@@ -23,10 +20,14 @@ export default function AdminUsersPage() {
   const [updatingId, setUpdatingId] = useState(null);
 
   const fetchUsers = async () => {
+    if (!session?.accessToken) {
+      setLoading(false);
+      return;
+    }
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
       const res = await fetch(`${apiUrl}/users/`, {
-        headers: session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {},
+        headers: { Authorization: `Bearer ${session.accessToken}` },
       });
       if (res.ok) {
         setUsers(await res.json());
@@ -74,85 +75,96 @@ export default function AdminUsersPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-6 pb-12">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1 text-xs font-bold text-foreground mb-2">
+            <span className="h-2 w-2 rounded-full bg-primary" />
+            <span>Identity Governance</span>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight text-foreground">
             User Accounts & Role Governance
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Manage municipal officers, maintenance leads, citizens, and administrative access.
           </p>
         </div>
         <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <Input
+          <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+          <input
             placeholder="Search name or email..."
-            className="pl-9 h-9 text-xs"
+            className="w-full rounded-full border border-border bg-card pl-9 pr-4 py-2 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-xs"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="py-12 text-center text-sm text-slate-500">Loading user accounts...</div>
-          ) : filtered.length === 0 ? (
-            <div className="py-16 text-center text-sm text-slate-500">No users found</div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {filtered.map((u) => (
-                <div key={u.id} className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-900 text-sm">
-                        {u.fullName || u.full_name || u.email}
-                      </span>
-                      <Badge
-                        variant={
-                          u.role === "ADMIN"
-                            ? "default"
-                            : u.role === "OFFICER"
-                            ? "warning"
-                            : u.role === "MAINTENANCE"
-                            ? "secondary"
-                            : "outline"
-                        }
-                        className="text-[10px]"
-                      >
-                        {u.role}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-slate-500">{u.email}</p>
-                    <p className="text-[11px] text-slate-400">Ward: {u.wardId || u.ward_id || "Global"}</p>
+      <div className="editorial-card p-0 overflow-hidden">
+        {loading ? (
+          <div className="py-16 text-center text-xs font-semibold text-muted-foreground">
+            Loading user accounts...
+          </div>
+        ) : filtered.length === 0 ? (
+          <EmptyStateIllustration
+            title="No Users Found"
+            subtitle="No municipal accounts matching your query."
+          />
+        ) : (
+          <div className="divide-y divide-border">
+            {filtered.map((u) => (
+              <div
+                key={u.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4 hover:bg-accent/20 transition-colors"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2.5">
+                    <h4 className="font-bold text-sm text-foreground">
+                      {u.fullName || u.full_name || u.email}
+                    </h4>
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                        u.role === "ADMIN"
+                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"
+                          : u.role === "OFFICER"
+                          ? "bg-primary/10 text-primary border border-primary/20"
+                          : u.role === "MAINTENANCE"
+                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                          : "bg-muted text-muted-foreground border border-border"
+                      }`}
+                    >
+                      {u.role}
+                    </span>
                   </div>
-
-                  {/* Role Switcher */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400">Set Role:</span>
-                    {["CITIZEN", "MAINTENANCE", "OFFICER", "ADMIN"].map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => changeRole(u.id, r)}
-                        disabled={updatingId === u.id || u.role === r}
-                        className={`rounded px-2 py-1 text-[10px] font-semibold transition ${
-                          u.role === r
-                            ? "bg-slate-900 text-white"
-                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
-                  </div>
+                  <p className="text-xs text-muted-foreground">{u.email}</p>
+                  <p className="text-[11px] text-muted-foreground/80 font-mono">
+                    Ward: {u.wardId || u.ward_id || "Global"}
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+                {/* Role Switcher */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-muted-foreground mr-1">Role:</span>
+                  {["CITIZEN", "MAINTENANCE", "OFFICER", "ADMIN"].map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => changeRole(u.id, r)}
+                      disabled={updatingId === u.id || u.role === r}
+                      className={`rounded-full px-3 py-1 text-[10px] font-bold transition-all ${
+                        u.role === r
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

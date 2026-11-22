@@ -31,6 +31,13 @@ class Settings(BaseSettings):
             return v
         return ["http://localhost:3000", "http://127.0.0.1:3000"]
 
+    def get_all_cors_origins(self) -> List[str]:
+        """Return CORS origins including the production frontend URL."""
+        origins = list(self.BACKEND_CORS_ORIGINS)
+        if self.FRONTEND_URL and self.FRONTEND_URL not in origins:
+            origins.append(self.FRONTEND_URL)
+        return origins
+
     # Database (PostgreSQL with asyncpg or SQLite fallback)
     DATABASE_URL: str = f"sqlite+aiosqlite:///{DEFAULT_SQLITE_PATH}"
 
@@ -40,9 +47,17 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # File uploads
+    # File uploads (local dev)
     UPLOAD_DIR: str = str(BACKEND_DIR / "uploads")
     MAX_UPLOAD_SIZE_MB: int = 100
+
+    # Cloudinary (production file storage — free tier)
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
+
+    # CORS — allow production frontend URL
+    FRONTEND_URL: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

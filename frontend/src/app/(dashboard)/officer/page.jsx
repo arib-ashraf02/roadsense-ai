@@ -13,12 +13,17 @@ import {
   Wrench,
   Users,
   MapPin,
-  Check,
-  X,
+  Sparkles,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { EmptyStateIllustration } from "@/components/illustrations/EmptyStateIllustration";
+import { motion } from "framer-motion";
+import {
+  FadeInView,
+  StaggerContainer,
+  StaggerItem,
+  AnimatedCounter,
+  InteractiveCard,
+} from "@/components/common/AnimationWrappers";
 
 export default function OfficerDashboard() {
   const { data: session } = useSession();
@@ -54,135 +59,179 @@ export default function OfficerDashboard() {
   const pendingComplaints = complaints.filter((c) => c.status === "SUBMITTED");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-12">
       {/* Officer Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
-              Municipal Officer Command
-            </h1>
-            <Badge variant="outline" className="border-purple-300 bg-purple-50 text-purple-700">
-              Ward Authority
-            </Badge>
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1 text-xs font-bold text-foreground mb-2">
+            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <span>Ward Engineering Command</span>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-3xl font-black tracking-tight text-foreground">
+            Municipal Officer Command
+          </h1>
+          <p className="text-xs text-muted-foreground mt-1">
             Triage AI-detected road defects, manage work orders, and verify field repairs.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/officer/complaints">
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <ClipboardList className="h-4 w-4" /> Triage Queue
-            </Button>
-          </Link>
-          <Link href="/officer/tickets">
-            <Button size="sm" className="gap-1.5 bg-blue-600 hover:bg-blue-700">
-              <Wrench className="h-4 w-4" /> Work Orders
-            </Button>
-          </Link>
+        <div className="flex items-center gap-3">
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              href="/officer/complaints"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold text-foreground shadow-xs hover:bg-accent transition"
+            >
+              <ClipboardList className="h-4 w-4 text-primary" />
+              <span>Triage Queue</span>
+            </Link>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              href="/officer/tickets"
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-95 transition"
+            >
+              <Wrench className="h-4 w-4" />
+              <span>Work Orders</span>
+            </Link>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Real-time Telemetry Grid */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold uppercase text-slate-500">Total Detections</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{overview?.total_potholes ?? 0}</div>
-            <p className="text-xs text-slate-400 mt-1">AI detected surface defects</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold uppercase text-slate-500">Unreviewed Grievances</CardTitle>
-            <Clock className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{overview?.complaints?.open ?? 0}</div>
-            <p className="text-xs text-slate-400 mt-1">Citizen reports pending triage</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold uppercase text-slate-500">Active Work Orders</CardTitle>
-            <Wrench className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{overview?.tickets?.pending ?? 0}</div>
-            <p className="text-xs text-slate-400 mt-1">Assigned to maintenance teams</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold uppercase text-slate-500">Resolution Rate</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
-              {overview?.complaints?.resolution_rate_pct ?? 0}%
+      <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        <StaggerItem>
+          <InteractiveCard className="editorial-card space-y-2 h-full">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-[11px] font-bold uppercase tracking-wider">Total Detections</span>
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
             </div>
-            <p className="text-xs text-slate-400 mt-1">Verified repairs closed</p>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="text-3xl font-black text-foreground">
+              {overview?.total_potholes !== undefined ? (
+                <AnimatedCounter value={overview.total_potholes} />
+              ) : (
+                "0"
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground">AI detected surface defects</p>
+          </InteractiveCard>
+        </StaggerItem>
+
+        <StaggerItem>
+          <InteractiveCard className="editorial-card space-y-2 h-full">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-[11px] font-bold uppercase tracking-wider">Pending Triage</span>
+              <Clock className="h-4 w-4 text-primary" />
+            </div>
+            <div className="text-3xl font-black text-primary">
+              {overview?.complaints?.open !== undefined ? (
+                <AnimatedCounter value={overview.complaints.open} />
+              ) : (
+                "0"
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground">Citizen reports awaiting action</p>
+          </InteractiveCard>
+        </StaggerItem>
+
+        <StaggerItem>
+          <InteractiveCard className="editorial-card space-y-2 h-full">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-[11px] font-bold uppercase tracking-wider">Active Work Orders</span>
+              <Wrench className="h-4 w-4 text-primary" />
+            </div>
+            <div className="text-3xl font-black text-foreground">
+              {overview?.tickets?.pending !== undefined ? (
+                <AnimatedCounter value={overview.tickets.pending} />
+              ) : (
+                "0"
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground">Dispatched to field teams</p>
+          </InteractiveCard>
+        </StaggerItem>
+
+        <StaggerItem>
+          <InteractiveCard className="editorial-card space-y-2 h-full">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span className="text-[11px] font-bold uppercase tracking-wider">Resolution Rate</span>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            </div>
+            <div className="text-3xl font-black text-foreground">
+              {overview?.complaints?.resolution_rate_pct !== undefined ? (
+                <AnimatedCounter value={`${overview.complaints.resolution_rate_pct}%`} />
+              ) : (
+                "0%"
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground">Verified closed with after-photo</p>
+          </InteractiveCard>
+        </StaggerItem>
+      </StaggerContainer>
 
       {/* Immediate Triage Queue */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <FadeInView delay={0.2} className="editorial-card space-y-5">
+        <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-base font-semibold">Priority Triage Queue</CardTitle>
-            <CardDescription>Review citizen submissions, check spatial duplicates, and dispatch tickets</CardDescription>
+            <h3 className="text-base font-bold text-foreground">Priority Triage Queue</h3>
+            <p className="text-xs text-muted-foreground">
+              Review citizen submissions, cross-check spatial duplicate clusters, and dispatch work orders
+            </p>
           </div>
-          <Link href="/officer/complaints">
-            <Button variant="ghost" size="sm" className="gap-1 text-xs">
-              View All <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
+          <Link
+            href="/officer/complaints"
+            className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+          >
+            <span>View Full Queue</span>
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="py-8 text-center text-sm text-slate-500">Loading complaints...</div>
-          ) : pendingComplaints.length === 0 ? (
-            <div className="py-10 text-center">
-              <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-400" />
-              <p className="mt-2 text-sm font-semibold text-slate-700">Triage Queue Clear!</p>
-              <p className="text-xs text-slate-400 mt-0.5">All received citizen grievances have been reviewed.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {pendingComplaints.slice(0, 5).map((c) => (
-                <div key={c.id} className="flex flex-col gap-3 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-slate-900">{c.title}</p>
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-slate-400" />
-                        {c.address_text || `${c.latitude.toFixed(4)}, ${c.longitude.toFixed(4)}`}
-                      </span>
-                      <span>•</span>
-                      <span>{new Date(c.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Link href={`/officer/complaints`}>
-                      <Button size="sm" variant="outline" className="text-xs">
-                        Review & Dispatch
-                      </Button>
-                    </Link>
+        </div>
+
+        {loading ? (
+          <div className="py-12 text-center text-xs font-semibold text-muted-foreground">
+            Loading triage queue...
+          </div>
+        ) : pendingComplaints.length === 0 ? (
+          <EmptyStateIllustration
+            title="Triage Queue Clear!"
+            subtitle="All received citizen road grievances have been reviewed and dispatched."
+          />
+        ) : (
+          <div className="divide-y divide-border">
+            {pendingComplaints.slice(0, 5).map((c) => (
+              <div
+                key={c.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-3 hover:bg-accent/20 rounded-xl px-2 transition-colors"
+              >
+                <div className="space-y-1">
+                  <h4 className="text-sm font-bold text-foreground">{c.title}</h4>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-primary" />
+                      {c.address_text || `${Number(c.latitude).toFixed(4)}, ${Number(c.longitude).toFixed(4)}`}
+                    </span>
+                    <span>•</span>
+                    <span>{new Date(c.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/officer/complaints`}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary hover:bg-primary hover:text-primary-foreground transition-all"
+                  >
+                    <span>Review & Dispatch</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </FadeInView>
     </div>
   );
 }

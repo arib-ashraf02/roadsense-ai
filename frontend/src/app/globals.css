@@ -2,75 +2,431 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+/* =========================================================================
+   ROADSENSE AI — FOUR OFFICIAL PREMIUM THEMES
+   CSS custom properties on :root and theme class selectors.
+   All Tailwind semantic tokens (bg-background, text-foreground, etc.) resolve
+   from these vars so every component is theme-aware without hardcoded colors.
+   ========================================================================= */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+/* ── Theme 1 (DEFAULT): Midnight Blue ───────────────────────────────────── */
+:root,
+.theme-midnight-blue,
+[data-theme="midnight-blue"] {
+  --background: 227 57% 6%;
+  --foreground: 210 40% 96%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+  --card: 223 50% 10%;
+  --card-foreground: 210 40% 96%;
 
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+  --popover: 223 50% 10%;
+  --popover-foreground: 210 40% 96%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+  --secondary: 222 47% 15%;
+  --secondary-foreground: 183 100% 50%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+  --muted: 222 40% 14%;
+  --muted-foreground: 215 20% 65%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+  --accent: 223 45% 15%;
+  --accent-foreground: 183 100% 50%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+  --destructive: 348 100% 61%;
+  --destructive-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
-  }
+  --border: 222 43% 18%;
+  --input: 222 43% 18%;
+  --ring: 217 91% 60%;
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+  --radius: 0.875rem;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+  --brand-glow: rgba(59, 130, 246, 0.35);
+  --brand-accent-glow: rgba(0, 242, 254, 0.25);
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+  --aurora-a: rgba(59, 130, 246, 0.18);
+  --aurora-b: rgba(0, 242, 254, 0.12);
+  --aurora-c: rgba(59, 130, 246, 0.08);
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+  --city-fill: rgba(59, 130, 246, 0.07);
+  --city-fill-mid: rgba(59, 130, 246, 0.04);
+  --city-stroke: rgba(59, 130, 246, 0.14);
+  --city-window: rgba(59, 130, 246, 0.35);
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-  }
+  --grid-color: rgba(59, 130, 246, 0.05);
 }
 
+/* ── Theme 2: Cyber Purple ──────────────────────────────────────────────── */
+.theme-cyber-purple,
+[data-theme="cyber-purple"] {
+  --background: 257 56% 6%;
+  --foreground: 270 100% 98%;
+
+  --card: 256 50% 11%;
+  --card-foreground: 270 100% 98%;
+
+  --popover: 256 50% 11%;
+  --popover-foreground: 270 100% 98%;
+
+  --primary: 271 91% 65%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 257 45% 16%;
+  --secondary-foreground: 349 89% 60%;
+
+  --muted: 257 40% 15%;
+  --muted-foreground: 270 60% 75%;
+
+  --accent: 257 45% 17%;
+  --accent-foreground: 271 91% 65%;
+
+  --destructive: 349 89% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 257 47% 22%;
+  --input: 257 47% 22%;
+  --ring: 271 91% 65%;
+
+  --radius: 0.875rem;
+
+  --brand-glow: rgba(168, 85, 247, 0.35);
+  --brand-accent-glow: rgba(244, 63, 94, 0.25);
+
+  --aurora-a: rgba(168, 85, 247, 0.20);
+  --aurora-b: rgba(244, 63, 94, 0.12);
+  --aurora-c: rgba(168, 85, 247, 0.08);
+
+  --city-fill: rgba(168, 85, 247, 0.07);
+  --city-fill-mid: rgba(168, 85, 247, 0.04);
+  --city-stroke: rgba(168, 85, 247, 0.18);
+  --city-window: rgba(168, 85, 247, 0.40);
+
+  --grid-color: rgba(168, 85, 247, 0.055);
+}
+
+/* ── Theme 3: Emerald Tech ──────────────────────────────────────────────── */
+.theme-emerald-tech,
+[data-theme="emerald-tech"] {
+  --background: 158 71% 4%;
+  --foreground: 152 81% 96%;
+
+  --card: 160 65% 8%;
+  --card-foreground: 152 81% 96%;
+
+  --popover: 160 65% 8%;
+  --popover-foreground: 152 81% 96%;
+
+  --primary: 160 84% 39%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 160 55% 12%;
+  --secondary-foreground: 189 94% 43%;
+
+  --muted: 160 50% 12%;
+  --muted-foreground: 156 72% 67%;
+
+  --accent: 160 55% 14%;
+  --accent-foreground: 160 84% 39%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 157 60% 17%;
+  --input: 157 60% 17%;
+  --ring: 160 84% 39%;
+
+  --radius: 0.875rem;
+
+  --brand-glow: rgba(16, 185, 129, 0.35);
+  --brand-accent-glow: rgba(6, 182, 212, 0.25);
+
+  --aurora-a: rgba(16, 185, 129, 0.18);
+  --aurora-b: rgba(6, 182, 212, 0.12);
+  --aurora-c: rgba(16, 185, 129, 0.07);
+
+  --city-fill: rgba(16, 185, 129, 0.07);
+  --city-fill-mid: rgba(16, 185, 129, 0.04);
+  --city-stroke: rgba(16, 185, 129, 0.18);
+  --city-window: rgba(16, 185, 129, 0.40);
+
+  --grid-color: rgba(16, 185, 129, 0.055);
+}
+
+/* ── Theme 4: Graphite ──────────────────────────────────────────────────── */
+.theme-graphite,
+[data-theme="graphite"] {
+  --background: 220 20% 5%;
+  --foreground: 210 20% 96%;
+
+  --card: 218 22% 10%;
+  --card-foreground: 210 20% 96%;
+
+  --popover: 218 22% 10%;
+  --popover-foreground: 210 20% 96%;
+
+  --primary: 214 32% 91%;
+  --primary-foreground: 220 20% 5%;
+
+  --secondary: 217 20% 14%;
+  --secondary-foreground: 199 89% 60%;
+
+  --muted: 217 20% 14%;
+  --muted-foreground: 218 11% 65%;
+
+  --accent: 217 20% 16%;
+  --accent-foreground: 199 89% 60%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 217 19% 19%;
+  --input: 217 19% 19%;
+  --ring: 199 89% 60%;
+
+  --radius: 0.875rem;
+
+  --brand-glow: rgba(56, 189, 248, 0.25);
+  --brand-accent-glow: rgba(226, 232, 240, 0.15);
+
+  --aurora-a: rgba(56, 189, 248, 0.12);
+  --aurora-b: rgba(226, 232, 240, 0.08);
+  --aurora-c: rgba(56, 189, 248, 0.05);
+
+  --city-fill: rgba(56, 189, 248, 0.06);
+  --city-fill-mid: rgba(56, 189, 248, 0.03);
+  --city-stroke: rgba(56, 189, 248, 0.14);
+  --city-window: rgba(56, 189, 248, 0.30);
+
+  --grid-color: rgba(226, 232, 240, 0.045);
+}
+
+/* =========================================================================
+   BASE
+   ========================================================================= */
 @layer base {
   * {
     @apply border-border;
   }
+  html {
+    color-scheme: dark;
+  }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased min-h-screen;
+    transition: background-color 0.4s ease, color 0.3s ease;
+  }
+  ::selection {
+    @apply bg-primary/30 text-primary-foreground;
   }
 }
+
+/* =========================================================================
+   GLASS & CARD UTILITIES
+   ========================================================================= */
+.glass-panel {
+  background: hsl(var(--card) / 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border) / 0.8);
+}
+
+.editorial-card {
+  @apply rounded-2xl border border-border bg-card/80 backdrop-blur-md p-6 shadow-sm;
+  transition: background-color 0.4s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.editorial-card-interactive {
+  @apply rounded-2xl border border-border bg-card/80 backdrop-blur-md p-6 shadow-sm;
+  transition: all 0.3s ease;
+}
+.editorial-card-interactive:hover {
+  @apply border-primary/60 shadow-lg;
+  transform: translateY(-2px);
+}
+
+/* =========================================================================
+   GLOW UTILITIES — resolve from CSS vars, update on theme change
+   ========================================================================= */
+.glow-border {
+  box-shadow: 0 0 20px -3px var(--brand-glow);
+}
+.glow-border-hover:hover {
+  box-shadow: 0 0 25px -2px var(--brand-glow);
+}
+
+/* =========================================================================
+   ACCENT UNDERLINE
+   ========================================================================= */
+.accent-underline {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+.accent-underline::after {
+  content: "";
+  position: absolute;
+  left: -2%;
+  bottom: -4px;
+  width: 104%;
+  height: 5px;
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary-foreground)));
+  border-radius: 9999px;
+  box-shadow: 0 0 10px var(--brand-glow);
+  z-index: 0;
+}
+
+/* =========================================================================
+   BACKGROUND ANIMATIONS
+   ========================================================================= */
+
+/* Aurora blob slow drift */
+@keyframes aurora-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(40px, -20px) scale(1.08); }
+  66%  { transform: translate(-25px, 15px) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes aurora-drift-alt {
+  0%   { transform: translate(0, 0) scale(1); }
+  40%  { transform: translate(-35px, 25px) scale(1.05); }
+  80%  { transform: translate(20px, -12px) scale(0.97); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* City silhouette slow float */
+@keyframes city-float {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Grid gentle pulse */
+@keyframes grid-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
+/* Particle rising */
+@keyframes particle-rise {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.5; }
+  100% { transform: translateY(-120vh) translateX(20px); opacity: 0; }
+}
+
+/* Radar sweep */
+@keyframes radar-sweep {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* =========================================================================
+   WEBSITE-WIDE ANIMATION SYSTEM & TRANSITION UTILITIES
+   ========================================================================= */
+
+/* Smooth element transitions across themes & interactive states */
+.transition-theme {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 250ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interactive-hover-lift {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.interactive-hover-lift:hover {
+  transform: translateY(-4px);
+}
+.interactive-hover-lift:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+/* Subtle breathing glow */
+@keyframes breathing-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px -3px var(--brand-glow);
+  }
+  50% {
+    box-shadow: 0 0 30px -1px var(--brand-glow);
+  }
+}
+.animate-breathing-glow {
+  animation: breathing-glow 3.5s ease-in-out infinite;
+}
+
+/* Laser sweep */
+@keyframes laser-sweep {
+  0% { transform: translateY(0%); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+.animate-laser-sweep {
+  animation: laser-sweep 3s ease-in-out infinite;
+}
+
+/* Shimmer shine effect for skeleton & cards */
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.animate-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer-sweep 2.2s infinite;
+}
+
+/* Radar pulse ripple */
+@keyframes radar-ripple {
+  0% { transform: scale(0.8); opacity: 0.9; }
+  70% { transform: scale(2.4); opacity: 0; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.animate-radar-ripple {
+  animation: radar-ripple 2.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+/* Subtle icon float */
+@keyframes subtle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.animate-subtle-float {
+  animation: subtle-float 4s ease-in-out infinite;
+}
+
+/* Accessible reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================================================
+   SCROLLBARS
+   ========================================================================= */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.6); }

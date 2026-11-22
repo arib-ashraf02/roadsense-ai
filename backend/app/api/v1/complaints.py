@@ -153,3 +153,16 @@ async def update_complaint(
     )
 
     return complaint
+
+
+@router.put("/{complaint_id}/status", response_model=ComplaintOut)
+async def update_complaint_status(
+    complaint_id: str,
+    payload: ComplaintUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.OFFICER, UserRole.ADMIN))
+):
+    """
+    Alias endpoint for updating complaint status.
+    """
+    return await update_complaint(complaint_id, payload, db, current_user)

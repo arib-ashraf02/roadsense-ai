@@ -11,10 +11,9 @@ import {
   Play,
   CheckCircle,
   ExternalLink,
+  Navigation,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { EmptyStateIllustration } from "@/components/illustrations/EmptyStateIllustration";
 
 export default function MaintenanceTasksPage() {
   const { data: session } = useSession();
@@ -23,10 +22,14 @@ export default function MaintenanceTasksPage() {
   const [updatingId, setUpdatingId] = useState(null);
 
   const fetchTasks = async () => {
+    if (!session?.accessToken) {
+      setLoading(false);
+      return;
+    }
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
       const res = await fetch(`${apiUrl}/tickets/`, {
-        headers: session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {},
+        headers: { Authorization: `Bearer ${session.accessToken}` },
       });
       if (res.ok) {
         setTasks(await res.json());
@@ -63,85 +66,115 @@ export default function MaintenanceTasksPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-12">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-bold text-foreground mb-2">
+          <span className="h-2 w-2 rounded-full bg-primary" />
+          <span>Active Field Queue</span>
+        </div>
+        <h1 className="text-3xl font-black tracking-tight text-foreground">
           Field Repair Work Queue
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           Select a work order, update field status to 'In Repair', and upload after-repair proof for officer sign-off.
         </p>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="py-12 text-center text-sm text-slate-500">Loading work orders...</div>
-          ) : tasks.length === 0 ? (
-            <div className="py-16 text-center text-slate-500 text-sm">
-              <Wrench className="mx-auto h-8 w-8 text-slate-300" />
-              <p className="mt-2 font-medium text-slate-800">No repair tasks in your queue.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {tasks.map((task) => (
-                <div key={task.id} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="space-y-1.5 max-w-2xl">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-blue-700">{task.ticket_number}</span>
-                      <span className="font-semibold text-slate-900 text-sm">{task.title}</span>
-                      <Badge variant={task.priority === "CRITICAL" ? "destructive" : "warning"} className="text-[10px]">
-                        {task.priority}
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px]">
-                        {task.status}
-                      </Badge>
-                    </div>
-
-                    <p className="text-xs text-slate-600">{task.description}</p>
-
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${task.latitude},${task.longitude}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1 text-blue-600 hover:underline"
-                      >
-                        <MapPin className="h-3 w-3" />
-                        Navigate ({task.latitude.toFixed(4)}, {task.longitude.toFixed(4)})
-                      </a>
-                      <span>•</span>
-                      <span>Target: {task.ward_identifier || "Ward 4"}</span>
-                    </div>
+      <div className="editorial-card p-0 overflow-hidden">
+        {loading ? (
+          <div className="py-16 text-center text-xs font-semibold text-muted-foreground">
+            Loading work orders...
+          </div>
+        ) : tasks.length === 0 ? (
+          <EmptyStateIllustration
+            title="No Active Repair Tasks"
+            subtitle="Your crew has completed all assigned municipal road work orders."
+          />
+        ) : (
+          <div className="divide-y divide-border">
+            {tasks.map((task) => (
+              <div
+                key={task.id}
+                className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-5 gap-4 hover:bg-accent/20 transition-colors"
+              >
+                <div className="space-y-1.5 max-w-2xl">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="font-mono text-xs font-bold text-primary">
+                      {task.ticket_number}
+                    </span>
+                    <h4 className="font-bold text-sm text-foreground">{task.title}</h4>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${
+                        task.priority === "CRITICAL"
+                          ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                      }`}
+                    >
+                      {task.priority}
+                    </span>
+                    <span className="rounded-full border border-border bg-card px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+                      {task.status}
+                    </span>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    {task.status === "OPEN" || task.status === "ASSIGNED" ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateStatus(task.id, "IN_REPAIR")}
-                        disabled={updatingId === task.id}
-                        className="gap-1.5 text-xs text-amber-700 border-amber-300 bg-amber-50 hover:bg-amber-100"
-                      >
-                        <Play className="h-3.5 w-3.5" />
-                        Start Repair
-                      </Button>
-                    ) : null}
+                  <p className="text-xs text-muted-foreground leading-relaxed">{task.description}</p>
 
-                    <Link href={`/maintenance/verify/${task.id}`}>
-                      <Button size="sm" className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-xs">
-                        <Camera className="h-3.5 w-3.5" />
-                        Submit Repair Evidence
-                      </Button>
-                    </Link>
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-0.5">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-primary" />
+                      {Number(task.latitude).toFixed(4)}, {Number(task.longitude).toFixed(4)}
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {new Date(task.created_at).toLocaleDateString()}
+                    </span>
+                    <a
+                      href={`https://maps.google.com/?q=${task.latitude},${task.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-primary font-bold hover:underline"
+                    >
+                      <Navigation className="h-3 w-3" />
+                      <span>GPS Directions</span>
+                    </a>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+                <div className="flex items-center gap-2">
+                  {task.status === "OPEN" || task.status === "ASSIGNED" ? (
+                    <button
+                      onClick={() => updateStatus(task.id, "IN_REPAIR")}
+                      disabled={updatingId === task.id}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90 transition"
+                    >
+                      <Play className="h-3.5 w-3.5" />
+                      <span>Start Repair Work</span>
+                    </button>
+                  ) : null}
+
+                  {task.status === "IN_REPAIR" ? (
+                    <Link
+                      href={`/maintenance/verify/${task.id}`}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                      <span>Submit Verification Proof</span>
+                    </Link>
+                  ) : null}
+
+                  {task.status === "CLOSED" ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>Verified & Closed</span>
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

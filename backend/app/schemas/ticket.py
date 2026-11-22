@@ -29,6 +29,8 @@ class TicketCreate(BaseModel):
     ward_identifier: Optional[str] = None
     assigned_team_lead_id: Optional[str] = None
     sla_deadline: Optional[datetime] = None
+    complaint_id: Optional[str] = None
+    complaintId: Optional[str] = None
 
 
 class TicketUpdate(BaseModel):

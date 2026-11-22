@@ -1,11 +1,19 @@
 import sys
 import uuid
+import os
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 # Add backend directory to sys.path
 backend_dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(backend_dir))
+
+# Load .env from backend directory if present
+try:
+    from dotenv import load_dotenv
+    load_dotenv(backend_dir / ".env")
+except ImportError:
+    pass
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -24,8 +32,19 @@ from app.models import (
 )
 from app.core.security import hash_password
 
-DB_PATH = backend_dir / "roadsense.db"
-engine = create_engine(f"sqlite:///{DB_PATH}")
+# Support both SQLite (local dev) and PostgreSQL (production via DATABASE_URL env var)
+DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{backend_dir / 'roadsense.db'}")
+
+# asyncpg URL → sync psycopg2 URL for the seed script
+if DATABASE_URL.startswith("postgresql+asyncpg://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://", 1)
+elif DATABASE_URL.startswith("postgres://"):
+    # Heroku/Neon sometimes uses postgres:// — normalize
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+print(f"[SEED] Using database: {DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else DATABASE_URL}")
+
+engine = create_engine(DATABASE_URL)
 
 
 def seed_database():

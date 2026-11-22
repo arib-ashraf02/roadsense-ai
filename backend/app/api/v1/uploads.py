@@ -5,10 +5,15 @@ Endpoints:
   POST /uploads/      — save media file, extract EXIF, create Upload record, trigger detection
   GET  /uploads/      — list user's uploads (paginated)
   GET  /uploads/{id}  — single upload details
+
+Storage strategy:
+  - If CLOUDINARY_CLOUD_NAME is configured → upload to Cloudinary (production)
+  - Otherwise → save to local filesystem (development)
 """
 from __future__ import annotations
 
 import os
+import io
 import uuid
 import logging
 from pathlib import Path
@@ -29,7 +34,27 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # ---------------------------------------------------------------------------
-# Directory setup (mirrors detection.py)
+# Determine storage mode: Cloudinary (production) or local (development)
+# ---------------------------------------------------------------------------
+_USE_CLOUDINARY = bool(settings.CLOUDINARY_CLOUD_NAME)
+
+if _USE_CLOUDINARY:
+    try:
+        import cloudinary
+        import cloudinary.uploader
+        cloudinary.config(
+            cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+            api_key=settings.CLOUDINARY_API_KEY,
+            api_secret=settings.CLOUDINARY_API_SECRET,
+            secure=True,
+        )
+        logger.info("Cloudinary storage configured.")
+    except ImportError:
+        logger.warning("Cloudinary package not installed; falling back to local storage.")
+        _USE_CLOUDINARY = False
+
+# ---------------------------------------------------------------------------
+# Directory setup for local storage
 # ---------------------------------------------------------------------------
 UPLOADS_BASE = Path(settings.UPLOAD_DIR)
 IMAGES_DIR = UPLOADS_BASE / "images"
@@ -37,15 +62,20 @@ VIDEOS_DIR = UPLOADS_BASE / "videos"
 FRAMES_DIR = UPLOADS_BASE / "frames"
 ANNOTATED_DIR = UPLOADS_BASE / "annotated"
 
-for _d in [IMAGES_DIR, VIDEOS_DIR, FRAMES_DIR, ANNOTATED_DIR]:
-    _d.mkdir(parents=True, exist_ok=True)
+try:
+    for _d in [IMAGES_DIR, VIDEOS_DIR, FRAMES_DIR, ANNOTATED_DIR]:
+        _d.mkdir(parents=True, exist_ok=True)
+except Exception:
+    # On Vercel serverless the filesystem is read-only; that's fine if Cloudinary is used
+    pass
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/bmp"}
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo", "video/webm"}
 MAX_SIZE = 500 * 1024 * 1024  # 500 MB
 
 
-def _save_file(file: UploadFile, dest_dir: Path) -> tuple[str, str, int]:
+def _save_file_local(file: UploadFile, dest_dir: Path) -> tuple[str, str, int]:
+    """Save file to local filesystem. Returns (stored_name, file_path, file_size)."""
     ext = Path(file.filename or "file").suffix or ".bin"
     stored_name = f"{uuid.uuid4().hex}{ext}"
     file_path = dest_dir / stored_name
@@ -55,6 +85,21 @@ def _save_file(file: UploadFile, dest_dir: Path) -> tuple[str, str, int]:
             f.write(chunk)
             total += len(chunk)
     return stored_name, str(file_path), total
+
+
+def _upload_to_cloudinary(file: UploadFile, folder: str) -> tuple[str, str, int]:
+    """Upload file to Cloudinary. Returns (public_id, secure_url, file_size)."""
+    file_data = file.file.read()
+    file_size = len(file_data)
+    public_id = f"roadsense/{folder}/{uuid.uuid4().hex}"
+    result = cloudinary.uploader.upload(
+        file_data,
+        public_id=public_id,
+        resource_type="auto",
+        overwrite=True,
+    )
+    secure_url = result.get("secure_url", "")
+    return result.get("public_id", public_id), secure_url, file_size
 
 
 # ---------------------------------------------------------------------------
@@ -81,23 +126,32 @@ async def create_upload(
             detail=f"Unsupported media type: {content_type}",
         )
 
-    dest_dir = IMAGES_DIR if is_image else VIDEOS_DIR
+    folder = "images" if is_image else "videos"
+    file_path: Optional[str] = None
+    media_url: Optional[str] = None
 
     try:
-        stored_name, file_path, file_size = _save_file(file, dest_dir)
+        if _USE_CLOUDINARY:
+            # Upload to Cloudinary (production)
+            stored_name, media_url, file_size = _upload_to_cloudinary(file, folder)
+            file_path = media_url  # Use Cloudinary URL as the "path"
+        else:
+            # Save locally (development)
+            dest_dir = IMAGES_DIR if is_image else VIDEOS_DIR
+            stored_name, file_path, file_size = _save_file_local(file, dest_dir)
+            media_url = f"/uploads/{folder}/{stored_name}"
     except Exception as e:
         logger.error(f"File save error: {e}")
         raise HTTPException(status_code=500, detail="Failed to save file.")
 
     if file_size > MAX_SIZE:
-        Path(file_path).unlink(missing_ok=True)
         raise HTTPException(status_code=413, detail="File too large (max 500 MB).")
 
-    # Extract GPS from EXIF (images only)
+    # Extract GPS from EXIF (images only, local file only)
     lat: Optional[float] = None
     lon: Optional[float] = None
     has_gps = False
-    if is_image:
+    if is_image and not _USE_CLOUDINARY and file_path:
         lat, lon = extract_gps(file_path)
         has_gps = lat is not None and lon is not None
 
@@ -110,6 +164,7 @@ async def create_upload(
         "stored_filename": stored_name,
         "media_type": media_type,
         "file_path": file_path,
+        "media_url": media_url,
         "file_size": file_size,
         "status": "PENDING",
         "latitude": lat,
@@ -119,7 +174,7 @@ async def create_upload(
 
     job_id: Optional[str] = None
 
-    if trigger_detection:
+    if trigger_detection and not _USE_CLOUDINARY and file_path:
         job_id = str(uuid.uuid4())
         create_job(
             job_id,
@@ -148,9 +203,13 @@ async def create_upload(
         **upload_record,
         "job_id": job_id,
         "message": (
-            f"Upload saved. Detection job {job_id} started."
-            if job_id
-            else "Upload saved. Detection not triggered."
+            f"Upload saved to Cloudinary. Detection not available on serverless."
+            if _USE_CLOUDINARY
+            else (
+                f"Upload saved. Detection job {job_id} started."
+                if job_id
+                else "Upload saved. Detection not triggered."
+            )
         ),
     }
 
