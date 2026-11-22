@@ -45,8 +45,11 @@ VIDEOS_DIR = UPLOADS_BASE / "videos"
 FRAMES_DIR = UPLOADS_BASE / "frames"
 ANNOTATED_DIR = UPLOADS_BASE / "annotated"
 
-for _d in [IMAGES_DIR, VIDEOS_DIR, FRAMES_DIR, ANNOTATED_DIR]:
-    _d.mkdir(parents=True, exist_ok=True)
+try:
+    for _d in [IMAGES_DIR, VIDEOS_DIR, FRAMES_DIR, ANNOTATED_DIR]:
+        _d.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/bmp"}
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo", "video/webm"}

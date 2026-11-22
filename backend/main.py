@@ -9,8 +9,11 @@ from app.api.v1 import api_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create uploads directory on startup
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    # Create uploads directory on startup (local dev)
+    try:
+        os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    except Exception:
+        pass
     # Initialize DB tables
     from app.core.database import init_db
     try:
@@ -44,9 +47,12 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 # Mount uploads directory for static file serving
 import pathlib
-_upload_path = pathlib.Path(settings.UPLOAD_DIR)
-_upload_path.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(_upload_path)), name="uploads")
+try:
+    _upload_path = pathlib.Path(settings.UPLOAD_DIR)
+    _upload_path.mkdir(parents=True, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=str(_upload_path)), name="uploads")
+except Exception:
+    pass
 
 
 @app.get("/", summary="Root Endpoint")
