@@ -8,7 +8,10 @@ import uuid
 from pathlib import Path
 from typing import List, Optional
 
-import cv2
+try:
+    import cv2
+except ImportError:
+    cv2 = None
 
 from app.core.job_store import create_job, update_job, get_job
 
@@ -33,6 +36,10 @@ def extract_frames(video_path: str, output_dir: str, fps: float = 0.67) -> List[
     Returns:
         List of absolute paths to the extracted frame images.
     """
+    if cv2 is None:
+        logger.warning("OpenCV is not available; video frame extraction skipped.")
+        return []
+
     output_dir_path = Path(output_dir)
     output_dir_path.mkdir(parents=True, exist_ok=True)
 
