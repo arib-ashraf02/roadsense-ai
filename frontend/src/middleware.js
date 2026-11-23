@@ -6,14 +6,25 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
 
-    // Role-based redirects on root
-    if (pathname === "/dashboard") {
+    // Role-based redirects on root /dashboard
+    if (pathname === "/dashboard" || pathname === "/dashboard/") {
       const role = token?.role;
       if (role === "ADMIN") return NextResponse.redirect(new URL("/admin", req.url));
       if (role === "OFFICER") return NextResponse.redirect(new URL("/officer", req.url));
       if (role === "MAINTENANCE") return NextResponse.redirect(new URL("/maintenance", req.url));
       if (role === "CITIZEN") return NextResponse.redirect(new URL("/citizen", req.url));
       return NextResponse.redirect(new URL("/citizen", req.url));
+    }
+
+    // Role-based access control for privileged dashboards
+    if (pathname.startsWith("/admin") && token?.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+    if (pathname.startsWith("/officer") && token?.role !== "OFFICER" && token?.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+    if (pathname.startsWith("/maintenance") && token?.role !== "MAINTENANCE" && token?.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
     return NextResponse.next();

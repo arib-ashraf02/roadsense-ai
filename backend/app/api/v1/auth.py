@@ -13,7 +13,15 @@ from app.core.security import (
     decode_token,
 )
 from app.models.user import User, UserRole
-from app.schemas.auth import UserRegister, UserLogin, Token, TokenRefresh, UserOut
+from app.schemas.auth import (
+    UserRegister,
+    UserLogin,
+    Token,
+    TokenRefresh,
+    UserOut,
+    GoogleAuthPayload,
+    GoogleAuthResponse,
+)
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
@@ -57,6 +65,46 @@ async def register(payload: UserRegister, db: AsyncSession = Depends(get_db)):
     )
 
 
+@router.post("/oauth/google", response_model=GoogleAuthResponse)
+async def google_oauth_login(payload: GoogleAuthPayload, db: AsyncSession = Depends(get_db)):
+    """
+    Authenticate or register a user via Google OAuth.
+    If the account exists, retain its existing role (e.g. ADMIN/OFFICER/CITIZEN).
+    If it is a new account, assign safe default CITIZEN role.
+    """
+    result = await db.execute(select(User).where(User.email == payload.email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        # Create new account with safe default role (CITIZEN)
+        user = User(
+            id=str(uuid.uuid4()),
+            email=payload.email,
+            passwordHash=hash_password(uuid.uuid4().hex),
+            fullName=payload.name or payload.email.split("@")[0],
+            role=UserRole.CITIZEN,
+            isActive=True,
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    elif not user.isActive:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is deactivated",
+        )
+
+    token_data = {"sub": user.id, "email": user.email, "role": user.role.value}
+    return GoogleAuthResponse(
+        user_id=user.id,
+        email=user.email,
+        role=user.role.value,
+        full_name=user.fullName,
+        access_token=create_access_token(token_data),
+        refresh_token=create_refresh_token(token_data),
+    )
+
+
 @router.post("/login", response_model=Token)
 async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == payload.email))
@@ -73,7 +121,7 @@ async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)):
         demo_alts = {
             "citizen@roadsense.ai": ["Citizen123!", "Citizen@12345"],
             "officer@roadsense.ai": ["Officer123!", "Officer@12345"],
-            "maintenance@roadsense.ai": ["Maintenance123!", "Maintenance@12345", "Crew123!"],
+            "maintenance@roadsense.ai": ["Maintenance123!", "Maintenance@12345", "Crew123!", "Team@12345"],
             "admin@roadsense.ai": ["Admin123!", "Admin@12345"],
         }
         if payload.email.lower() in demo_alts and payload.password in demo_alts[payload.email.lower()]:

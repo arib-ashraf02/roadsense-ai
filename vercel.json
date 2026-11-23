@@ -16,15 +16,43 @@
   "routes": [
     {
       "src": "/api/v1/(.*)",
-      "dest": "api/index.py"
+      "dest": "/api/index.py"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "api/index.py"
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/api/auth/(.*)",
+      "dest": "/frontend/api/auth/$1"
+    },
+    {
+      "src": "/api/auth",
+      "dest": "/frontend/api/auth"
+    },
+    {
+      "src": "/citizen/report/(.*)",
+      "dest": "/frontend/citizen/report/$1"
+    },
+    {
+      "src": "/officer/complaints/(.*)",
+      "dest": "/frontend/officer/complaints/$1"
+    },
+    {
+      "src": "/officer/tickets/(.*)",
+      "dest": "/frontend/officer/tickets/$1"
+    },
+    {
+      "src": "/maintenance/verify/(.*)",
+      "dest": "/frontend/maintenance/verify/$1"
+    },
+    {
+      "src": "/_next/(.*)",
+      "dest": "/frontend/_next/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "frontend/$1"
+      "dest": "/frontend/$1"
     }
   ]
 }

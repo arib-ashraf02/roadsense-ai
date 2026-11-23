@@ -74,3 +74,9 @@ pnpm-debug.log*
 # ---- Misc --------------------------------------------------
 scratch/
 .vercel/
+
+.vercel
+.env*
+
+uploads/
+backend/uploads/

@@ -98,7 +98,7 @@ export default function Home() {
     async function checkHealth() {
       const startTime = performance.now();
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
         const res = await fetch(`${apiUrl}/health`);
         const latency = Math.round(performance.now() - startTime);
         if (res.ok) {

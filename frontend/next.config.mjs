@@ -33,6 +33,12 @@ const nextConfig = {
         hostname: 'upload.wikimedia.org',
         pathname: '/**',
       },
+      // Google account profile images
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
+        pathname: '/**',
+      },
     ],
   },
   // In production (Vercel), /api/v1/* is routed to the Python serverless function
